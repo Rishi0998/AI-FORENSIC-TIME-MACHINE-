@@ -1,0 +1,460 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   LANDING PAGE — HIGH-END FLAT AESTHETICS (NEO-CYBERPUNK)
+   Attractive design without using any gradients, blurs, or shadows.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #050505;
+  --bg-secondary: #0a0a0a;
+  --bg-card: #111111;
+  --accent: #00f2ff; /* Cyber Cyan */
+  --accent-secondary: #ff00ff; /* Neon Magenta */
+  --text: #ffffff;
+  --text-muted: #888888;
+  --border: #222222;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.landing-container {
+  min-height: 100vh;
+  width: 100%;
+  color: var(--text);
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Background Patterns (Solid Lines Only) ─────────────────────────────── */
+.landing-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 60px 60px;
+  background-image: 
+    linear-gradient(to right, #111 1px, transparent 1px),
+    linear-gradient(to bottom, #111 1px, transparent 1px);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.landing-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 2px solid var(--border);
+}
+
+.landing-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: 900;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.logo-text span:first-child {
+  font-weight: 800;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.logo-text span.small {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.landing-nav a {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.landing-nav a:hover {
+  color: var(--accent);
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────────── */
+.landing-hero {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 140px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 32px;
+}
+
+.landing-hero h1 {
+  font-size: 5rem;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.landing-hero h1 span.accent {
+  color: var(--accent);
+}
+
+.landing-hero p {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  max-width: 700px;
+  line-height: 1.5;
+  margin-bottom: 40px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-hero-primary {
+  padding: 18px 40px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s;
+}
+
+.btn-hero-primary::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--accent);
+  z-index: -1;
+}
+
+.btn-hero-primary:hover {
+  transform: translate(-3px, -3px);
+}
+
+.btn-hero-secondary {
+  padding: 18px 40px;
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.btn-hero-secondary:hover {
+  background: #fff;
+  color: #000;
+}
+
+/* ── Hero Visual ────────────────────────────────────────────────────────── */
+.hero-visual {
+  margin-top: 80px;
+  width: 100%;
+  max-width: 900px;
+  z-index: 10;
+}
+
+.terminal-frame {
+  background: #000;
+  border: 2px solid var(--border);
+  position: relative;
+}
+
+.terminal-frame::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--accent);
+  z-index: -1;
+  opacity: 0.3;
+}
+
+.terminal-header {
+  padding: 10px 16px;
+  background: var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.t-dot { width: 10px; height: 10px; background: #333; }
+.t-dot.active { background: var(--accent); }
+
+.terminal-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.terminal-body {
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: left;
+  color: #00ff00;
+}
+
+.log-line span { color: #fff; opacity: 0.5; }
+
+/* ── Stats ──────────────────────────────────────────────────────────────── */
+.hero-stats {
+  display: flex;
+  gap: 60px;
+  margin-top: 60px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-num {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+
+.stat-desc {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+/* ── Features ───────────────────────────────────────────────────────────── */
+.features-section {
+  padding: 100px 60px;
+  z-index: 10;
+  position: relative;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.section-header h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  padding: 40px;
+  border: 2px solid var(--border);
+  transition: all 0.2s;
+  position: relative;
+}
+
+.feature-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-secondary);
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--accent);
+  border-left: 2px solid var(--accent);
+}
+
+.feature-icon {
+  margin-bottom: 24px;
+  color: var(--accent);
+}
+
+.feature-card h3 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* ── How it Works ──────────────────────────────────────────────────────── */
+.how-it-works {
+  padding: 100px 60px;
+  background: var(--bg-secondary);
+}
+
+.process-flow {
+  display: flex;
+  gap: 40px;
+  margin-top: 60px;
+}
+
+.process-step {
+  flex: 1;
+  padding: 30px;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.step-num {
+  font-size: 4rem;
+  font-weight: 900;
+  color: rgba(0, 242, 255, 0.1);
+  position: absolute;
+  top: -20px;
+  right: 20px;
+}
+
+.process-step h4 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ── Capabilities ───────────────────────────────────────────────────────── */
+.capabilities-section {
+  padding: 100px 60px;
+}
+
+.capabilities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 2fr); /* Using something interesting */
+  grid-template-areas: "a b c" "d e f";
+  gap: 20px;
+}
+
+.cap-card {
+  padding: 30px;
+  background: #000;
+  border: 1px solid var(--border);
+}
+
+.cap-card:hover {
+  background: var(--accent);
+  color: #000;
+}
+
+.cap-card h4 { font-weight: 800; text-transform: uppercase; }
+
+/* ── CTA Banner ─────────────────────────────────────────────────────────── */
+.cta-banner {
+  padding: 120px 20px;
+  background: var(--accent);
+  color: #000;
+  text-align: center;
+}
+
+.cta-banner h2 { font-size: 3.5rem; font-weight: 900; text-transform: uppercase; }
+.cta-banner p { font-weight: 700; font-size: 1.2rem; }
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.landing-footer {
+  padding: 80px 60px;
+  border-top: 2px solid var(--border);
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+}
+
+.footer-brand h2 { font-weight: 800; }
+
+/* ── Animation (Flat) ───────────────────────────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.landing-hero > * {
+  animation: slideUp 0.6s both;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .landing-hero h1 { font-size: 3rem; }
+  .features-grid, .process-flow, .capabilities-grid { grid-template-columns: 1fr; }
+  .landing-header { padding: 20px; }
+}

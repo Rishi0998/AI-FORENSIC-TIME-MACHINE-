@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Forensics Time Machine - Project Report</title>
+    <style>
+        :root {
+            --primary-color: #003366;
+            --text-color: #333;
+            --secondary-color: #666;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 25mm shell-padding;
+            margin: 10mm auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            padding: 25mm;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-top: 1.5em;
+        }
+
+        h1 { font-size: 2.5em; text-align: center; margin-top: 3em; }
+        h2 { font-size: 1.8em; border-bottom: 2px solid var(--primary-color); padding-bottom: 5px; }
+        h3 { font-size: 1.3em; }
+
+        p { margin-bottom: 1em; text-align: justify; }
+
+        ul, ol { margin-bottom: 1em; padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+        }
+
+        th { background-color: #f8f8f8; color: var(--primary-color); }
+
+        .title-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 247mm;
+            text-align: center;
+        }
+
+        .title-info {
+            margin-top: 50mm;
+        }
+
+        .author-info {
+            margin-bottom: 50mm;
+        }
+
+        .footer {
+            font-size: 0.9em;
+            color: var(--secondary-color);
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+            margin-top: 2em;
+        }
+
+        @media print {
+            body { background: none; }
+            .page { margin: 0; box-shadow: none; page-break-after: always; }
+            .no-print { display: none; }
+        }
+
+        .toc ul { list-style-type: none; padding-left: 0; }
+        .toc li { margin-bottom: 10px; }
+        .toc a { text-decoration: none; color: var(--text-color); }
+        .toc span { float: right; }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Title Page -->
+    <div class="page">
+        <div class="title-page">
+            <div class="title-info">
+                <h1>PROJECT REPORT ON<br>AI FORENSICS TIME MACHINE</h1>
+                <p style="font-size: 1.2em; color: var(--secondary-color);">An AI-Powered Cybersecurity Incident Response & Log Analysis Platform</p>
+            </div>
+            
+            <div class="author-info">
+                <h3>Submitted By (Team Members):</h3>
+                <ul style="list-style-type: none; padding: 0; font-weight: bold; font-size: 1.1em;">
+                    <li>Rishikesh Sharma (25BCS11739)</li>
+                    <li>Raghvendra Pratap Singh (25BCS10027)</li>
+                    <li>Saksham Singla (25BCS10277)</li>
+                    <li>Aditya Prashar (25BCS10307)</li>
+                    <li>Saanvi Sharma (25BCS10561)</li>
+                </ul>
+                <p>Academic Year 2025-2026</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="page">
+        <h2>Table of Contents</h2>
+        <div class="toc">
+            <ul>
+                <li>1. Executive Summary</li>
+                <li>2. Introduction</li>
+                <li>3. Project Objectives</li>
+                <li>4. Technology Stack</li>
+                <li>5. System Architecture</li>
+                <li>6. Key Features</li>
+                <li>7. Detection Methodology</li>
+                <li>8. Implementation Details</li>
+                <li>9. Conclusion</li>
+                <li>10. References</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="page">
+        <h2>1. Executive Summary</h2>
+        <p>
+            The **AI Forensics Time Machine** is an advanced, production-grade cybersecurity platform designed to simplify the complex task of digital forensic log analysis. By leveraging modern AI models (Google Gemini) and real-time visualization techniques, the system enables security analysts to upload raw system logs, detect threats automatically, and reconstruct attack sequences through interactive timelines and graphs. This project bridges the gap between raw data and actionable intelligence, providing automated remediation recommendations and exportable forensic reports.
+        </p>
+
+        <h2>2. Introduction</h2>
+        <p>
+            In the modern digital landscape, large-scale systems generate millions of log entries daily. Manually auditing these logs to identify malicious behavior is nearly impossible for human analysts. Traditional Security Information and Event Management (SIEM) tools often produce high noise and require significant manual configuration. 
+        </p>
+        <p>
+            The AI Forensics Time Machine addresses these challenges by introducing an "AI-First" approach to forensics. It utilizes a modular architecture to parse multi-format logs, identify suspicious patterns using rule-based and behavioral heuristics, and then uses Large Language Models (LLMs) to generate human-readable narratives of security incidents.
+        </p>
+
+        <h2>3. Project Objectives</h2>
+        <ul>
+            <li><strong>Automated Ingestion:</strong> To support various log formats (Linux, Windows, Network) with automated parsing.</li>
+            <li><strong>Threat Detection:</strong> To implement a comprehensive rule engine capable of identifying 20+ types of cyberattacks including brute-force, privilege escalation, and reconnaissance.</li>
+            <li><strong>Visualization:</strong> To provide interactive Cytoscape-based attack graphs and Chart.js timelines for spatial and temporal analysis.</li>
+            <li><strong>Forensic Replay:</strong> To enable step-by-step chronological playback of security incidents for deep-dive investigation.</li>
+            <li><strong>AI Analysis:</strong> To integrate Google Gemini AI for generating executive summaries and remediation steps.</li>
+        </ul>
+    </div>
+
+    <div class="page">
+        <h2>4. Technology Stack</h2>
+        <h3>4.1 Backend Technologies</h3>
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Technology Used</th>
+            </tr>
+            <tr>
+                <td>Language</td>
+                <td>Python 3.10+</td>
+            </tr>
+            <tr>
+                <td>Framework</td>
+                <td>FastAPI (Asynchronous Web Framework)</td>
+            </tr>
+            <tr>
+                <td>Database</td>
+                <td>SQLite with SQLAlchemy ORM</td>
+            </tr>
+            <tr>
+                <td>AI Processing</td>
+                <td>Google Gemini 2.0 Flash / rules-based fallback</td>
+            </tr>
+            <tr>
+                <td>Graph Processing</td>
+                <td>NetworkX</td>
+            </tr>
+        </table>
+
+        <h3>4.2 Frontend Technologies</h3>
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Technology Used</th>
+            </tr>
+            <tr>
+                <td>Library</td>
+                <td>React 19</td>
+            </tr>
+            <tr>
+                <td>Build Tool</td>
+                <td>Vite 8</td>
+            </tr>
+            <tr>
+                <td>Data Visualization</td>
+                <td>Chart.js, react-chartjs-2</td>
+            </tr>
+            <tr>
+                <td>Graph Layout</td>
+                <td>Cytoscape.js</td>
+            </tr>
+            <tr>
+                <td>Styling</td>
+                <td>Vanilla CSS (Cybersecurity Dark Theme)</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="page">
+        <h2>5. System Architecture</h2>
+        <p>
+            The system follows a modern client-server architecture. The backend is responsible for data ingestion, processing, and AI orchestration, while the frontend handles high-performance data visualization.
+        </p>
+        <h3>5.1 Data Flow</h3>
+        <ol>
+            <li><strong>Ingestion:</strong> Users upload log files (`.log`, `.txt`) or select live sources via the dashboard.</li>
+            <li><strong>Parsing:</strong> The <code>Parser Service</code> uses regex-based patterns to normalize logs into a structured <code>Event</code> format.</li>
+            <li><strong>Detection:</strong> The <code>Detection Engine</code> scans events for threat signatures (e.g., repeated login failures).</li>
+            <li><strong>Reconstruction:</strong> The <code>Analyzer Service</code> groups related events into <code>Attack Chains</code>.</li>
+            <li><strong>AI Enrichment:</strong> The <code>AI Service</code> processes incident data to generate summaries.</li>
+            <li><strong>Delivery:</strong> JSON data is served to the React frontend via REST endpoints and WebSockets.</li>
+        </ol>
+
+        <h2>6. Key Features</h2>
+        <ul>
+            <li><strong>Real-Time Monitor:</strong> Live streaming of system logs using WebSockets for immediate detection of threats.</li>
+            <li><strong>Attack Reconstruction Graph:</strong> Visual mapping of attackers (IPs) to targets (Users/Processes).</li>
+            <li><strong>Event Timeline:</strong> A temporal view of system activity with severity-based filtering.</li>
+            <li><strong>Forensic Replay UI:</strong> Controls to speed up or slow down the playback of an incident.</li>
+            <li><strong>Auto-Generated PDF Reports:</strong> Professional forensic documentation ready for board-level review.</li>
+        </ul>
+    </div>
+
+    <div class="page">
+        <h2>7. Detection Methodology</h2>
+        <p>
+            The system employs a hybrid detection model:
+        </p>
+        <h3>7.1 Rule-Based Engine</h3>
+        <p>
+            A signature-based engine identifies known patterns of abuse. Key rules include:
+            <ul>
+                <li><strong>Brute Force:</strong> Detection of 5+ failed login attempts within 60 seconds.</li>
+                <li><strong>Privilege Escalation:</strong> Tracking unauthorized `sudo` executions.</li>
+                <li><strong>Suspicious Recon:</strong> Commands like `whoami`, `ifconfig`, and `nmap` execution patterns.</li>
+            </ul>
+        </p>
+        <h3>7.2 AI Behavioral Analysis</h3>
+        <p>
+            When a Gemini API key is provided, the system sends anonymized attack sequences to Google's AI models. The AI provides:
+            <ul>
+                <li><strong>Narrative Generation:</strong> Translating raw logs into "The attacker gained access via X and attempted to Y."</li>
+                <li><strong>Remediation:</strong> Recommending security patches or firewall rules.</li>
+            </ul>
+        </p>
+
+        <h2>8. Implementation Details</h2>
+        <p>
+            The project was implemented over several modules:
+            <ul>
+                <li><strong>Loghub Integration:</strong> Supports the Loghub benchmark dataset for testing.</li>
+                <li><strong>Cyber-Security UI:</strong> Designed with a "Neo-Cyberpunk" aesthetic using CSS variables for consistent theming.</li>
+                <li><strong>Responsive Design:</strong> Fully functional across desktop and tablet browsers.</li>
+            </ul>
+        </p>
+
+        <h2>9. Conclusion</h2>
+        <p>
+            The AI Forensics Time Machine demonstrates the power of combining traditional digital forensics with generative AI. It significantly reduces the Mean Time to Detect (MTTD) and Mean Time to Respond (MTTR) by providing automated insights. Future enhancements could include full EDR (Endpoint Detection and Response) capabilities and integration with SIEM platforms like Splunk or Elastic.
+        </p>
+
+        <div class="footer">
+            &copy; 2026 AI Forensics Time Machine Project Report
+        </div>
+    </div>
+
+</body>
+</html>
