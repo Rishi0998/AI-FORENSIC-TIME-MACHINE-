@@ -42,9 +42,9 @@ export async function getTimeline(sessionId) {
   return data;
 }
 
-export async function getGraph(sessionId) {
+export async function getGraph(sessionId, recalculate = false, sample = false) {
   const { data } = await api.get('/graph', {
-    params: { session_id: sessionId },
+    params: { session_id: sessionId, recalculate, sample },
   });
   return data;
 }

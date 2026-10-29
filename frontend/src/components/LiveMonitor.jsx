@@ -4,10 +4,13 @@ import { analyzeLiveStream } from '../api';
 import { playCyberClick, playThreatAlert, playWarpEffect } from '../cyberAudio';
 
 const getWsUrl = () => {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   if (import.meta.env.VITE_API_BASE) {
     return import.meta.env.VITE_API_BASE.replace(/^http/, 'ws') + '/ws/monitor';
   }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return `ws://127.0.0.1:8000/api/ws/monitor`;
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/api/ws/monitor`;
 };
 

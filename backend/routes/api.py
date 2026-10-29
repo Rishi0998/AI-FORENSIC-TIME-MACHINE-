@@ -5,6 +5,7 @@ real log sources, and real-time monitoring.
 """
 import uuid
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime
@@ -17,7 +18,7 @@ from models.event import Event, AttackChain, AnalysisResult
 from services.parser import parse_logs
 from services.detector import detect_suspicious_events, calculate_risk_score
 from services.analyzer import build_attack_chains, get_attack_narrative
-from services.graph import build_attack_graph
+from services.graph import build_attack_graph, generate_weaponized_attack_graph
 from services.ai_explainer import generate_explanation
 from services.log_fetcher import get_real_log, list_available_sources, get_windows_log_channels
 from services.monitor import start_monitoring, stop_monitoring, get_monitor_stats
@@ -53,16 +54,16 @@ async def upload_logs(
         except Exception as e:
             raise HTTPException(400, f"Invalid live events data: {str(e)}")
     elif target_source:
-        content = get_real_log(target_source)
+        content = await run_in_threadpool(get_real_log, target_source)
         if not content:
             raise HTTPException(400, f"Live log source '{target_source}' is not accessible on this machine")
-        events = parse_logs(content, log_type)
+        events = await run_in_threadpool(parse_logs, content, log_type)
     elif file:
         raw = await file.read()
         content = raw.decode("utf-8", errors="ignore")
         if not content or not content.strip():
             raise HTTPException(400, "Uploaded log file is empty")
-        events = parse_logs(content, log_type)
+        events = await run_in_threadpool(parse_logs, content, log_type)
     else:
         raise HTTPException(400, "Provide a real log file, select a live system channel, or stream from Live Monitor")
 
@@ -70,22 +71,22 @@ async def upload_logs(
         raise HTTPException(400, "Could not parse any events from the provided logs")
 
     # Step 2: Detect suspicious events
-    events = detect_suspicious_events(events)
+    events = await run_in_threadpool(detect_suspicious_events, events)
 
     # Step 3: Calculate risk
-    risk_score, risk_level = calculate_risk_score(events)
+    risk_score, risk_level = await run_in_threadpool(calculate_risk_score, events)
 
     # Step 4: Build attack chains
-    chains = build_attack_chains(events)
+    chains = await run_in_threadpool(build_attack_chains, events)
 
     # Step 5: Generate graph
-    graph_data = build_attack_graph(events)
+    graph_data = await run_in_threadpool(build_attack_graph, events)
 
     # Step 6: Generate AI explanation
-    explanation_data = generate_explanation(events, chains, risk_score, risk_level)
+    explanation_data = await run_in_threadpool(generate_explanation, events, chains, risk_score, risk_level)
 
     # Step 7: Get attack narrative
-    narrative = get_attack_narrative(chains)
+    narrative = await run_in_threadpool(get_attack_narrative, chains)
 
     # Persist events to database
     for event in events:
@@ -326,13 +327,61 @@ async def get_timeline(
 @router.get("/graph")
 async def get_graph(
     session_id: str = Query(...),
+    recalculate: bool = Query(False),
+    sample: bool = Query(False),
     db: Session = Depends(get_db)
 ):
     """Get attack graph data for Cytoscape.js visualization."""
-    if session_id in session_cache:
+    if sample or session_id in ("demo", "sample", "simulation", "apt"):
         return {
             "session_id": session_id,
-            "graph": session_cache[session_id]["graph"],
+            "graph": generate_weaponized_attack_graph(),
+        }
+
+    # If recalculate requested or session not in cache, rebuild with latest engine
+    if recalculate or (session_id not in session_cache):
+        db_events = db.query(Event).filter(
+            Event.session_id == session_id
+        ).order_by(Event.timestamp).all()
+        if db_events:
+            events = [_db_event_to_dict(e) for e in db_events]
+            graph_data = build_attack_graph(events)
+
+            analysis = db.query(AnalysisResult).filter(AnalysisResult.session_id == session_id).first()
+            if analysis:
+                analysis.graph_data = graph_data
+                db.commit()
+
+            if session_id in session_cache:
+                session_cache[session_id]["graph"] = graph_data
+            else:
+                session_cache[session_id] = {"graph": graph_data, "events": events}
+
+            return {
+                "session_id": session_id,
+                "graph": graph_data,
+            }
+
+    if session_id in session_cache and "graph" in session_cache[session_id]:
+        cached = session_cache[session_id]["graph"]
+        if cached.get("elements", {}).get("edges"):
+            return {
+                "session_id": session_id,
+                "graph": cached,
+            }
+
+    # Fetch and auto-upgrade any legacy stored graph
+    db_events = db.query(Event).filter(Event.session_id == session_id).order_by(Event.timestamp).all()
+    if db_events:
+        events = [_db_event_to_dict(e) for e in db_events]
+        graph_data = build_attack_graph(events)
+        analysis = db.query(AnalysisResult).filter(AnalysisResult.session_id == session_id).first()
+        if analysis:
+            analysis.graph_data = graph_data
+            db.commit()
+        return {
+            "session_id": session_id,
+            "graph": graph_data,
         }
 
     analysis = db.query(AnalysisResult).filter(
@@ -459,7 +508,7 @@ async def get_log_sources():
 @router.get("/extract-local-logs")
 async def get_local_log_channels():
     """Get available Windows Event Log channels for local extraction."""
-    channels = get_windows_log_channels()
+    channels = await run_in_threadpool(get_windows_log_channels)
     return {"channels": channels, "platform": __import__('platform').system()}
 
 

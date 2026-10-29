@@ -94,10 +94,9 @@ def _build_extraction_script(channel: str, max_events: int) -> str:
     Build a PowerShell script that extracts Windows Event Logs.
     Uses a temp .ps1 file approach to avoid shell escaping issues.
     """
-    # Use PowerShell backtick escapes for newlines: `r`n
-    # Handle null messages safely with -replace and null coalescing
-    # Provider is quoted with [] to handle spaces in names
     return f"""
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = 'SilentlyContinue'
 try {{
     $events = Get-WinEvent -LogName '{channel}' -MaxEvents {max_events} 2>$null
@@ -161,10 +160,10 @@ def extract_windows_logs(channel_id: str, max_events: int = 500) -> Optional[str
             
             result = subprocess.run(
                 ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps_file)],
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30
             )
             
-            if result.returncode == 0 and result.stdout.strip():
+            if result.returncode == 0 and result.stdout and result.stdout.strip():
                 output = result.stdout.strip()
                 if output == "NO_EVENTS_FOUND":
                     return None
@@ -183,9 +182,9 @@ def extract_windows_logs(channel_id: str, max_events: int = 500) -> Optional[str
         # Fallback: try wevtutil for simpler extraction
         result = subprocess.run(
             ["wevtutil", "qe", channel, "/c:" + str(max_events), "/rd:true", "/f:text"],
-            capture_output=True, text=True, timeout=30
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30
         )
-        if result.returncode == 0 and result.stdout.strip():
+        if result.returncode == 0 and result.stdout and result.stdout.strip():
             # Convert wevtutil output to our format
             return _convert_wevtutil_output(result.stdout)
 
@@ -296,9 +295,9 @@ def get_windows_log_channels() -> list:
     try:
         result = subprocess.run(
             ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script],
-            capture_output=True, text=True, timeout=20
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20
         )
-        if result.returncode == 0:
+        if result.returncode == 0 and result.stdout:
             for line in result.stdout.strip().split('\n'):
                 line = line.strip()
                 if line.startswith('CHANNEL_') and '=' in line:
@@ -334,7 +333,7 @@ def get_windows_log_channels() -> list:
     return channels
 
 
-def get_real_log(source_id: str, max_lines: int = 2000) -> Optional[str]:
+def get_real_log(source_id: str, max_lines: int = 500) -> Optional[str]:
     """
     Read a real log source by ID.
     Returns the log content as a string, or None if unavailable.

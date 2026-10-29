@@ -133,25 +133,25 @@ def _call_gemini(context: str, api_key: Optional[str] = None) -> Optional[str]:
                 )
 
                 if response and response.text:
-                    print(f"✅ Gemini ({model_name}) response received ({len(response.text)} chars)")
+                    print(f"[INFO] Gemini ({model_name}) response received ({len(response.text)} chars)")
                     return response.text
 
             except Exception as model_err:
                 err_str = str(model_err)
                 if "429" in err_str or "quota" in err_str.lower():
-                    print(f"⚠️ Gemini {model_name} quota exceeded, trying next model...")
+                    print(f"[WARN] Gemini {model_name} quota exceeded, trying next model...")
                     continue
                 elif "404" in err_str or "not found" in err_str.lower():
-                    print(f"⚠️ Gemini model {model_name} not available, trying next...")
+                    print(f"[WARN] Gemini model {model_name} not available, trying next...")
                     continue
                 else:
-                    print(f"⚠️ Gemini {model_name} error: {model_err}")
+                    print(f"[WARN] Gemini {model_name} error: {model_err}")
                     continue
 
     except ImportError:
-        print("⚠️ google-genai package not installed. Run: pip install google-genai")
+        print("[WARN] google-genai package not installed. Run: pip install google-genai")
     except Exception as e:
-        print(f"⚠️ Gemini API error: {e}")
+        print(f"[WARN] Gemini API error: {e}")
 
     return None
 
@@ -179,7 +179,7 @@ def _call_openai(context: str) -> Optional[str]:
         if response.status_code == 200:
             return response.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        print(f"⚠️ OpenAI API error: {e}")
+        print(f"[WARN] OpenAI API error: {e}")
     return None
 
 
