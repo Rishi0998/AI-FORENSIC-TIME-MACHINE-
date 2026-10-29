@@ -9,121 +9,365 @@ import LiveMonitor from './components/LiveMonitor';
 import ReportExport from './components/ReportExport';
 import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
+import CyberBackground from './components/CyberBackground';
+import CyberDiagnosticsHUD from './components/CyberDiagnosticsHUD';
+import CyberTicker from './components/CyberTicker';
+import CyberGlitchText from './components/CyberGlitchText';
+import { isSoundEnabled, toggleSound, playCyberClick } from './cyberAudio';
 import './index.css';
 
-/* ── Dashboard Sidebar ─────────────────────────────────────────────────── */
+/* ── Professional SOC Topbar ─────────────────────────────────────────────── */
+function Topbar({ title, sessionId, sessionInfo, onNewSession }) {
+  const navigate = useNavigate();
+  const [timeStr, setTimeStr] = useState('');
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
+
+  useEffect(() => {
+    const updateTime = () => {
+      const d = new Date();
+      const zulu = d.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+      setTimeStr(zulu);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSoundToggle = () => {
+    const nextState = toggleSound();
+    setSoundOn(nextState);
+  };
+
+  const riskLevel = sessionInfo?.risk_level || 'low';
+  const riskBadgeClass = riskLevel === 'critical' ? 'badge-critical'
+    : riskLevel === 'high' ? 'badge-high'
+    : riskLevel === 'medium' ? 'badge-medium'
+    : 'badge-low';
+
+  const isCritical = riskLevel === 'critical' || (sessionInfo?.risk_score && sessionInfo.risk_score >= 70);
+
+  return (
+    <header className="topbar">
+      <div className="topbar-left">
+        <h2 className="topbar-title" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '0.06em', fontSize: '1rem' }}>
+          {title}
+        </h2>
+        <div className="topbar-divider"></div>
+        <div className="topbar-clock">
+          <span className="pulse-dot"></span>
+          <span>{timeStr}</span>
+        </div>
+
+        {/* DEFCON Indicator */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '2px 8px',
+          background: isCritical ? 'rgba(255,0,85,0.18)' : 'rgba(0,242,254,0.12)',
+          border: `1px solid ${isCritical ? 'var(--accent-red)' : 'rgba(0,242,254,0.35)'}`,
+          borderRadius: '4px',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.68rem',
+          fontWeight: 700,
+          color: isCritical ? 'var(--accent-red)' : 'var(--accent-cyan)',
+          letterSpacing: '0.06em'
+        }}>
+          <span style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: isCritical ? 'var(--accent-red)' : 'var(--accent-cyan)',
+            boxShadow: `0 0 8px ${isCritical ? 'var(--accent-red)' : 'var(--accent-cyan)'}`,
+            animation: 'pulseSlow 1.5s infinite'
+          }}></span>
+          <span>{isCritical ? 'DEFCON 1 // BREACH' : 'DEFCON 5 // STANDBY'}</span>
+        </div>
+
+        {sessionId && (
+          <span className={`badge ${riskBadgeClass}`}>
+            {riskLevel.toUpperCase()} THREAT &bull; SCORE {sessionInfo?.risk_score ?? 0}
+          </span>
+        )}
+      </div>
+
+      <div className="topbar-actions">
+        {/* Audio Synthesizer SFX Toggle */}
+        <button 
+          className="btn btn-outline btn-sm" 
+          onClick={handleSoundToggle}
+          title="Toggle Cyber Synthesizer Sound FX"
+          style={{
+            borderColor: soundOn ? 'var(--accent-cyan)' : 'var(--border-secondary)',
+            color: soundOn ? 'var(--accent-cyan)' : 'var(--text-muted)',
+            boxShadow: soundOn ? '0 0 10px rgba(0,242,255,0.2)' : 'none',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.72rem'
+          }}
+        >
+          <span>{soundOn ? '🔊 SFX ON' : '🔈 SFX OFF'}</span>
+        </button>
+
+        {sessionId ? (
+          <button className="btn btn-outline btn-sm" onClick={() => { playCyberClick(); onNewSession(); }}>
+            <IconUpload />
+            <span>New Investigation</span>
+          </button>
+        ) : (
+          <button className="btn btn-primary btn-sm" onClick={() => { playCyberClick(); navigate('/app'); }}>
+            <IconUpload />
+            <span>Ingest Logs</span>
+          </button>
+        )}
+        <button className="btn btn-ghost btn-sm" onClick={() => { playCyberClick(); navigate('/'); }}>
+          Portal Overview &rarr;
+        </button>
+      </div>
+    </header>
+  );
+}
+
+/* ── Enterprise SOC Sidebar ──────────────────────────────────────────────── */
 function Sidebar({ sessionId, sessionInfo }) {
+  const navigate = useNavigate();
+
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand">
-        <h1>Digital Forensics<br/>Time Machine</h1>
-        <span>AI-Powered Analysis</span>
+      <div className="sidebar-brand" onClick={() => { playCyberClick(); navigate('/'); }} role="button" tabIndex={0}>
+        <div className="brand-logo-icon" style={{ boxShadow: '0 0 15px rgba(0,242,255,0.4)', borderColor: 'var(--accent-cyan)' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <circle cx="12" cy="11" r="3"/>
+            <path d="M12 8v3l2 2"/>
+          </svg>
+        </div>
+        <div className="sidebar-brand-text">
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.95rem', letterSpacing: '0.06em' }}>
+            <CyberGlitchText text="Chronos Forensics" triggerOnHover={true} />
+          </h1>
+          <span style={{ color: 'var(--accent-cyan)', letterSpacing: '0.12em', fontWeight: 700 }}>
+            QUANTUM SOC // V4.2
+          </span>
+        </div>
       </div>
 
       <nav className="sidebar-nav">
         <div className="nav-section">
-          <div className="nav-section-title">Ingestion</div>
-          <NavLink to="/app" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <div className="nav-section-title">Telemetry Ingestion</div>
+          <NavLink to="/app" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconUpload /></span>
-            Log Upload
+            Log Ingestion
           </NavLink>
-          <NavLink to="/app/monitor" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/app/monitor" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconRadar /></span>
-            Live Monitor
+            Live Event Monitor
           </NavLink>
         </div>
 
         <div className="nav-section">
-          <div className="nav-section-title">Investigation</div>
-          <NavLink to="/app/timeline" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`}>
+          <div className="nav-section-title">Investigation Grid</div>
+          <NavLink to="/app/timeline" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconTimeline /></span>
             Event Timeline
           </NavLink>
-          <NavLink to="/app/graph" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`}>
+          <NavLink to="/app/graph" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconGraph /></span>
-            Attack Graph
+            Attack Vector Graph
           </NavLink>
-          <NavLink to="/app/replay" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`}>
+          <NavLink to="/app/replay" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconReplay /></span>
             Forensic Replay
           </NavLink>
         </div>
 
         <div className="nav-section">
-          <div className="nav-section-title">Reporting</div>
-          <NavLink to="/app/analysis" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`}>
+          <div className="nav-section-title">Threat Intelligence</div>
+          <NavLink to="/app/analysis" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconAnalysis /></span>
-            AI Analysis
+            AI Kill Chain Analysis
           </NavLink>
-          <NavLink to="/app/report" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`}>
+          <NavLink to="/app/report" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconReport /></span>
-            Export Report
+            Forensic Report Export
           </NavLink>
         </div>
 
         <div className="nav-section">
-          <div className="nav-section-title">System</div>
-          <NavLink to="/app/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <div className="nav-section-title">System Settings</div>
+          <NavLink to="/app/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconSettings /></span>
-            Settings
+            AI Engine &amp; Rules
           </NavLink>
         </div>
       </nav>
 
-      {sessionId && sessionInfo && (
-        <div className="sidebar-footer">
-          Session: {sessionId}<br/>
-          {sessionInfo.total_events} events &middot; {sessionInfo.suspicious_events} threats
+      <div className="sidebar-footer">
+        {sessionId ? (
+          <div className="sidebar-session-card">
+            <div className="session-id-row">
+              <span className="session-tag">SESSION ID</span>
+              <span className="session-val">{sessionId.substring(0, 16)}...</span>
+            </div>
+            <div className="session-counts">
+              <span>{sessionInfo?.total_events || 0} events</span>
+              <span>&bull;</span>
+              <span style={{ color: sessionInfo?.suspicious_events > 0 ? 'var(--accent-red)' : 'var(--text-muted)' }}>
+                {sessionInfo?.suspicious_events || 0} IOCs
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="sidebar-idle-card">
+            <span>READY FOR INGESTION</span>
+          </div>
+        )}
+        <div className="telemetry-status">
+          <span className="pulse-dot"></span>
+          <span>SOC Engine Operational</span>
         </div>
-      )}
+      </div>
     </aside>
   );
 }
 
-function Topbar({ title, sessionId, onNewSession }) {
-  const navigate = useNavigate();
-  return (
-    <div className="topbar">
-      <div className="topbar-title">{title}</div>
-      <div className="topbar-actions">
-        {sessionId && (
-          <button className="btn btn-outline btn-sm" onClick={onNewSession}>
-            New Analysis
-          </button>
-        )}
-        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>
-          Exit to Home
-        </button>
-      </div>
-    </div>
-  );
-}
-
+/* ── Crazy Cybernetic Tactical HUD Session Stats ────────────────────────────── */
 function SessionStats({ sessionInfo }) {
   if (!sessionInfo) return null;
+  const [copied, setCopied] = useState(false);
+
+  const copySessionId = () => {
+    if (sessionInfo.session_id) {
+      playCyberClick();
+      navigator.clipboard?.writeText(sessionInfo.session_id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    }
+  };
+
+  const riskScore = sessionInfo.risk_score || 0;
+  const numActiveCells = Math.min(10, Math.max(riskScore > 0 ? 1 : 0, Math.round((riskScore / 100) * 10)));
+  const threatLevel = riskScore >= 75 ? 'critical' : riskScore >= 50 ? 'high' : riskScore >= 25 ? 'medium' : 'low';
+  const hasThreats = (sessionInfo.suspicious_events || 0) > 0;
+
   return (
-    <div className="stats-grid fade-in">
-      <div className="stat-card">
-        <div className="stat-label">Session ID</div>
-        <div className="stat-value info">{sessionInfo.session_id || '—'}</div>
+    <div className="stats-grid-cyber fade-in">
+      {/* 1. Active Investigation ID */}
+      <div className="stat-card-cyber">
+        <div>
+          <div className="stat-corner-tag">[ 0xSEC_ID // INVESTIGATION ]</div>
+          <div className="stat-header-cyber">
+            <span className="stat-title-cyber">
+              <span className="pulse-dot" style={{ background: 'var(--accent-cyan)', boxShadow: '0 0 8px var(--accent-cyan)' }}></span>
+              ACTIVE INVESTIGATION
+            </span>
+            <button 
+              className={`cyber-copy-btn ${copied ? 'copied' : ''}`} 
+              onClick={copySessionId} 
+              title="Copy Investigation Hex ID to Clipboard"
+            >
+              {copied ? '✓ COPIED' : '📋 0xCOPY'}
+            </button>
+          </div>
+          <div className="stat-value-cyber cyan" style={{ fontSize: '1.25rem', wordBreak: 'break-all' }}>
+            0x{sessionInfo.session_id?.substring(0, 10) || '00000000'}
+          </div>
+        </div>
+        <div className="stat-footer-cyber">
+          <span>NODE: CHRONOS-ALPHA</span>
+          <span style={{ color: 'var(--accent-cyan)' }}>ENCRYPTED</span>
+        </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-label">Total Events</div>
-        <div className="stat-value">{sessionInfo.total_events}</div>
+
+      {/* 2. Ingested Events */}
+      <div className="stat-card-cyber">
+        <div>
+          <div className="stat-corner-tag">[ TELEMETRY_STREAM ]</div>
+          <div className="stat-header-cyber">
+            <span className="stat-title-cyber">INGESTED EVENTS</span>
+            <span className="stat-pill-cyber success">NORMALIZED</span>
+          </div>
+          <div className="stat-value-cyber" style={{ color: '#00f2fe' }}>
+            {sessionInfo.total_events?.toLocaleString() || 0}
+          </div>
+        </div>
+        <div className="stat-footer-cyber">
+          <div className="pulse-wave-mini">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <span>DRIFT: 0.00% // LIVE</span>
+        </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-label">Threats Detected</div>
-        <div className="stat-value danger">{sessionInfo.suspicious_events}</div>
+
+      {/* 3. Suspicious IOCs */}
+      <div className={`stat-card-cyber ${hasThreats ? 'threat-alert' : ''}`}>
+        <div>
+          <div className="stat-corner-tag" style={{ color: hasThreats ? '#ff0055' : 'var(--accent-cyan)' }}>
+            [ {hasThreats ? '⚠ IOC_ALERT' : 'PERIMETER_MONITOR'} ]
+          </div>
+          <div className="stat-header-cyber">
+            <span className="stat-title-cyber" style={{ color: hasThreats ? '#ff0055' : '#fff' }}>
+              SUSPICIOUS IOCS
+            </span>
+            <span className={`stat-pill-cyber ${hasThreats ? 'danger' : 'success'}`}>
+              {hasThreats ? 'THREATS' : 'CLEAR'}
+            </span>
+          </div>
+          <div className={`stat-value-cyber ${hasThreats ? 'danger' : 'cyan'}`}>
+            {sessionInfo.suspicious_events || 0}
+          </div>
+        </div>
+        <div className="stat-footer-cyber">
+          <span style={{ color: hasThreats ? '#ff0055' : 'var(--text-muted)' }}>
+            {hasThreats ? '🚨 ANOMALY LOCATED' : 'PERIMETER SECURE'}
+          </span>
+          <span>{hasThreats ? 'FLAGGED' : '0 VULNS'}</span>
+        </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-label">Attack Phases</div>
-        <div className="stat-value warning">{sessionInfo.attack_phases}</div>
+
+      {/* 4. MITRE Attack Phases */}
+      <div className="stat-card-cyber tactic-alert">
+        <div>
+          <div className="stat-corner-tag" style={{ color: '#ffaa00' }}>[ MITRE_ATT&CK ]</div>
+          <div className="stat-header-cyber">
+            <span className="stat-title-cyber">MITRE ATTACK PHASES</span>
+            <span className="stat-pill-cyber warning">TACTICS</span>
+          </div>
+          <div className="stat-value-cyber warning">
+            {sessionInfo.attack_phases || 0}
+          </div>
+        </div>
+        <div className="stat-footer-cyber">
+          <span style={{ color: '#ffaa00' }}>KILL-CHAIN ACTIVE</span>
+          <span>ATT&CK v14</span>
+        </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-label">Risk Score</div>
-        <div className="stat-value danger">{sessionInfo.risk_score}</div>
-        <div className="risk-bar">
-          <div className={`risk-bar-fill ${sessionInfo.risk_level}`} style={{ width: `${sessionInfo.risk_score}%` }}></div>
+
+      {/* 5. Threat Risk Score & 10-Segment LED Energy Cell Meter */}
+      <div className={`stat-card-cyber ${threatLevel === 'critical' ? 'threat-alert' : ''}`}>
+        <div>
+          <div className="stat-corner-tag">[ DEFCON_MATRIX ]</div>
+          <div className="stat-header-cyber">
+            <span className="stat-title-cyber">THREAT RISK SCORE</span>
+            <span className={`stat-pill-cyber ${threatLevel === 'critical' ? 'danger' : threatLevel === 'high' ? 'danger' : threatLevel === 'medium' ? 'warning' : ''}`}>
+              {sessionInfo.risk_level?.toUpperCase() || 'LOW'}
+            </span>
+          </div>
+          <div className={`stat-value-cyber ${threatLevel === 'critical' || threatLevel === 'high' ? 'danger' : threatLevel === 'medium' ? 'warning' : 'cyan'}`}>
+            {riskScore} <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>/ 100</span>
+          </div>
+          {/* Segmented LED Energy Gauge */}
+          <div className="hud-energy-gauge">
+            {[...Array(10)].map((_, idx) => (
+              <div 
+                key={idx} 
+                className={`hud-cell ${idx < numActiveCells ? `active-${threatLevel}` : ''}`} 
+              />
+            ))}
+          </div>
+        </div>
+        <div className="stat-footer-cyber">
+          <span>DEFCON {threatLevel === 'critical' ? '1' : threatLevel === 'high' ? '2' : threatLevel === 'medium' ? '3' : '5'}</span>
+          <span>SCORE {riskScore}%</span>
         </div>
       </div>
     </div>
@@ -131,40 +375,56 @@ function SessionStats({ sessionInfo }) {
 }
 
 const PAGE_TITLES = {
-  '/app': 'Log Ingestion',
-  '/app/monitor': 'Real-Time Monitor',
-  '/app/timeline': 'Event Timeline',
-  '/app/graph': 'Attack Graph',
-  '/app/replay': 'Forensic Replay',
-  '/app/analysis': 'AI Analysis Report',
-  '/app/report': 'Export Report',
-  '/app/settings': 'Settings',
+  '/app': 'Telemetry Log Ingestion',
+  '/app/monitor': 'Live Event Monitor',
+  '/app/timeline': 'Event Reconstruction Timeline',
+  '/app/graph': 'Attack Vector Graph',
+  '/app/replay': 'Forensic Replay Scrubber',
+  '/app/analysis': 'AI Neural Incident Analysis',
+  '/app/report': 'Forensic Report Export',
+  '/app/settings': 'AI Engine Configuration',
 };
 
 function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSession, loading, setLoading }) {
   const location = useLocation();
-  const title = PAGE_TITLES[location.pathname] || 'Forensics';
+  const title = PAGE_TITLES[location.pathname] || 'Forensic Workspace';
   const showStats = sessionId && sessionInfo && !['/app/monitor', '/app', '/app/settings'].includes(location.pathname);
+  const defconLevel = sessionId && sessionInfo?.risk_score >= 70 ? 'DEFCON 1' : 'DEFCON 5';
 
   return (
-    <div className="app-layout">
+    <div className="app-layout" style={{ position: 'relative', minHeight: '100vh', paddingBottom: 28 }}>
+      {/* Live Interactive Cyber Matrix Background */}
+      <CyberBackground />
+
       <Sidebar sessionId={sessionId} sessionInfo={sessionInfo} />
-      <div className="main-area">
-        <Topbar title={title} sessionId={sessionId} onNewSession={onNewSession} />
-        <div className="page-content">
+      
+      <div className="main-area" style={{ position: 'relative', zIndex: 1 }}>
+        <Topbar 
+          title={title} 
+          sessionId={sessionId} 
+          sessionInfo={sessionInfo}
+          onNewSession={onNewSession} 
+        />
+        <main className="page-content" style={{ position: 'relative', zIndex: 1 }}>
           {showStats && <SessionStats sessionInfo={sessionInfo} />}
           <Routes>
             <Route path="/" element={<Upload onAnalysisComplete={onAnalysisComplete} loading={loading} setLoading={setLoading} />} />
             <Route path="/monitor" element={<LiveMonitor onAnalysisComplete={onAnalysisComplete} />} />
-            <Route path="/timeline" element={sessionId ? <Timeline sessionId={sessionId} /> : <NoSession onAnalysisComplete={onAnalysisComplete} setLoading={setLoading} />} />
-            <Route path="/graph" element={sessionId ? <Graph sessionId={sessionId} /> : <NoSession onAnalysisComplete={onAnalysisComplete} setLoading={setLoading} />} />
-            <Route path="/replay" element={sessionId ? <Replay sessionId={sessionId} /> : <NoSession onAnalysisComplete={onAnalysisComplete} setLoading={setLoading} />} />
-            <Route path="/analysis" element={sessionId ? <Analysis sessionId={sessionId} /> : <NoSession onAnalysisComplete={onAnalysisComplete} setLoading={setLoading} />} />
-            <Route path="/report" element={sessionId ? <ReportExport sessionId={sessionId} sessionInfo={sessionInfo} /> : <NoSession onAnalysisComplete={onAnalysisComplete} setLoading={setLoading} />} />
+            <Route path="/timeline" element={sessionId ? <Timeline sessionId={sessionId} /> : <NoSession />} />
+            <Route path="/graph" element={sessionId ? <Graph sessionId={sessionId} /> : <NoSession />} />
+            <Route path="/replay" element={sessionId ? <Replay sessionId={sessionId} /> : <NoSession />} />
+            <Route path="/analysis" element={sessionId ? <Analysis sessionId={sessionId} /> : <NoSession />} />
+            <Route path="/report" element={sessionId ? <ReportExport sessionId={sessionId} sessionInfo={sessionInfo} /> : <NoSession />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
-        </div>
+        </main>
       </div>
+
+      {/* Floating Tactical Telemetry & Oscilloscope Deck */}
+      <CyberDiagnosticsHUD sessionId={sessionId} sessionInfo={sessionInfo} />
+
+      {/* Live Threat Telemetry Ticker at the bottom edge */}
+      <CyberTicker sessionInfo={sessionInfo} defconLevel={defconLevel} />
     </div>
   );
 }
@@ -174,8 +434,6 @@ function AppContent() {
   const [sessionInfo, setSessionInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-
 
   const handleAnalysisComplete = (result) => {
     setSessionId(result.session_id);
@@ -206,23 +464,35 @@ function AppContent() {
   );
 }
 
-function NoSession({ onAnalysisComplete, setLoading }) {
+function NoSession() {
   const navigate = useNavigate();
 
   return (
-    <div className="empty-state fade-in">
-      <div className="empty-icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
-      </div>
-      <h3>No Active Forensic Session</h3>
-      <p>Start the real-time live monitor to stream events as they happen, or ingest log files from your machine.</p>
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: 16 }}>
-        <button className="btn btn-primary" onClick={() => navigate('/app/monitor')}>
-          ⚡ Start Live Monitor
-        </button>
-        <button className="btn btn-outline" onClick={() => navigate('/app')}>
-          📁 Ingest System Logs
-        </button>
+    <div className="card fade-in" style={{ textAlign: 'center', padding: '56px 24px' }}>
+      <div className="empty-state">
+        <div className="empty-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" strokeWidth="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18"/>
+            <path d="M9 21V9"/>
+          </svg>
+        </div>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', marginTop: 14 }}>
+          No Active Investigation Selected
+        </h3>
+        <p style={{ maxWidth: 480, margin: '10px auto 22px', color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.5 }}>
+          Launch the live event monitor to capture events in real time, or ingest system log files to begin automated breach timeline reconstruction.
+        </p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: 16 }}>
+          <button className="btn btn-primary" onClick={() => navigate('/app/monitor')}>
+            <IconRadar />
+            <span>Launch Live Monitor</span>
+          </button>
+          <button className="btn btn-outline" onClick={() => navigate('/app')}>
+            <IconUpload />
+            <span>Ingest System Logs</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -236,8 +506,7 @@ export default function App() {
   );
 }
 
-
-/* ── SVG Icons ─────────────────────────────────────────────────────────── */
+/* ── Clean SVG Icons ─────────────────────────────────────────────────────── */
 function IconUpload() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

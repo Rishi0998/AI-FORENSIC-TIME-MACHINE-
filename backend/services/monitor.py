@@ -34,6 +34,34 @@ monitor_stats = {
 
 # Windows tracking
 _last_record_ids: Dict[str, int] = {}
+_seen_event_ids: Set[str] = set()
+_sid_cache: Dict[str, str] = {}
+
+def _resolve_sid(sid: str) -> Optional[str]:
+    """Map cryptic Windows SIDs to clean, readable user identifiers."""
+    if not sid:
+        return None
+    if sid in _sid_cache:
+        return _sid_cache[sid]
+
+    well_known = {
+        "S-1-5-18": "SYSTEM",
+        "S-1-5-19": "LOCAL SERVICE",
+        "S-1-5-20": "NETWORK SERVICE",
+    }
+    if sid in well_known:
+        _sid_cache[sid] = well_known[sid]
+        return well_known[sid]
+
+    # Resolve local user
+    curr_user = os.getenv("USERNAME")
+    if curr_user and ("-100" in sid or sid.startswith("S-1-5-21")):
+        _sid_cache[sid] = curr_user
+        return curr_user
+
+    _sid_cache[sid] = sid
+    return sid
+
 WINDOWS_CHANNELS = [
     "System",
     "Application",
@@ -130,6 +158,13 @@ def _fetch_recent_windows_events(limit: int = 15) -> List[Dict]:
     return events[-limit:]
 
 
+def _run_wevtutil(cmd: List[str]):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, errors="ignore", timeout=4)
+    except Exception:
+        return None
+
+
 async def _watch_windows_logs():
     """Continuously poll Windows Event Logs for new events in real time."""
     # Initialize record IDs if not set
@@ -137,8 +172,8 @@ async def _watch_windows_logs():
         if ch not in _last_record_ids:
             try:
                 cmd = ["wevtutil", "qe", ch, "/c:1", "/rd:true", "/f:xml"]
-                res = subprocess.run(cmd, capture_output=True, text=True, errors="ignore", timeout=4)
-                if res.returncode == 0 and res.stdout.strip():
+                res = await asyncio.to_thread(_run_wevtutil, cmd)
+                if res and res.returncode == 0 and res.stdout.strip():
                     parsed = _parse_wevtutil_xml(res.stdout, ch)
                     if parsed:
                         _last_record_ids[ch] = parsed[0][1]
@@ -153,11 +188,17 @@ async def _watch_windows_logs():
                 try:
                     # Query recent 5 events
                     cmd = ["wevtutil", "qe", ch, "/c:5", "/rd:true", "/f:xml"]
-                    res = subprocess.run(cmd, capture_output=True, text=True, errors="ignore", timeout=4)
-                    if res.returncode == 0 and res.stdout.strip():
+                    res = await asyncio.to_thread(_run_wevtutil, cmd)
+                    if res and res.returncode == 0 and res.stdout.strip():
                         parsed = _parse_wevtutil_xml(res.stdout, ch)
                         for evt, rec_id in parsed:
+                            event_key = f"{ch}:{rec_id}"
+                            if event_key in _seen_event_ids:
+                                continue
                             if rec_id > last_id:
+                                _seen_event_ids.add(event_key)
+                                if len(_seen_event_ids) > 10000:
+                                    _seen_event_ids.clear()
                                 _last_record_ids[ch] = max(_last_record_ids.get(ch, 0), rec_id)
                                 new_events.append(evt)
                 except Exception:
@@ -224,12 +265,17 @@ def _parse_wevtutil_xml(raw_xml: str, channel: str) -> List[tuple]:
 
             # User SID or Name
             sec_el = sys_el.find("ns:Security", ns)
-            user = sec_el.attrib.get("UserID", "") if sec_el is not None else ""
+            raw_user = sec_el.attrib.get("UserID", "") if sec_el is not None else ""
+            user = _resolve_sid(raw_user)
+
+            # Execution ProcessID
+            exec_el = sys_el.find("ns:Execution", ns)
+            pid = exec_el.attrib.get("ProcessID") if exec_el is not None else None
 
             # Extract Data items
             data_el = root.find("ns:EventData", ns)
             data_items = [d.text for d in data_el.findall("ns:Data", ns) if d.text] if data_el is not None else []
-            msg = " ".join(data_items[:4]) if data_items else f"{provider} Event {event_id}"
+            msg = " // ".join(data_items[:3]) if data_items else f"{provider} Event {event_id}"
 
             # Format raw log line for detection
             raw_line = f"{time_str[:19].replace('T', ' ')} EventID={event_id} Level={severity.title()} Provider={provider} Message={msg}"
@@ -239,6 +285,10 @@ def _parse_wevtutil_xml(raw_xml: str, channel: str) -> List[tuple]:
                 "action": f"windows_{channel.lower().split('-')[-1]}_event",
                 "source_type": "windows",
                 "process": provider,
+                "message": msg if msg != f"{provider} Event {event_id}" else None,
+                "event_id": event_id,
+                "record_id": rec_id,
+                "pid": pid,
                 "user": user or None,
                 "ip_address": None,
                 "severity": severity,

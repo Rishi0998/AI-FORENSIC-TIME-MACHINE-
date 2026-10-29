@@ -5,7 +5,22 @@ Maps detections to MITRE ATT&CK tactics and techniques.
 """
 from typing import List, Dict, Tuple
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
+
+
+def _parse_timestamp(ts):
+    """Safely parse a timestamp into a datetime object."""
+    if isinstance(ts, datetime):
+        return ts
+    if isinstance(ts, str):
+        try:
+            return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        except Exception:
+            try:
+                return datetime.strptime(ts[:19], "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                return None
+    return None
 
 # ── MITRE ATT&CK Mapping ────────────────────────────────────────────────────
 MITRE_MAP = {
@@ -79,7 +94,10 @@ def detect_suspicious_events(events: List[Dict]) -> List[Dict]:
         ip = event.get("ip_address")
         user = event.get("user")
         process = event.get("process", "")
-        timestamp = event.get("timestamp")
+        raw_ts = event.get("timestamp")
+        timestamp = _parse_timestamp(raw_ts)
+        if timestamp:
+            event["timestamp"] = timestamp
 
         # Default values
         event["is_suspicious"] = 0
@@ -97,7 +115,7 @@ def detect_suspicious_events(events: List[Dict]) -> List[Dict]:
             event["is_suspicious"] = 1
             event["severity"] = "medium"
             event["detection_rule"] = "failed_login"
-            if ip:
+            if ip and timestamp:
                 failed_logins[ip].append(timestamp)
 
         # ── Rule 2: Brute force detection (5+ failures from same IP in 5 min) ──

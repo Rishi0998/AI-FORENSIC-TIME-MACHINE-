@@ -12,54 +12,73 @@ export default function LandingPage() {
 
       <header className="landing-header">
         <div className="landing-logo">
-          <div className="logo-icon">T</div>
+          <div className="logo-shield">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <circle cx="12" cy="11" r="3"/>
+              <path d="M12 8v3l2 2"/>
+            </svg>
+          </div>
           <div className="logo-text">
-            <span>AI Forensics</span>
-            <span className="small">Digital Time Machine</span>
+            <span>Chronos Forensics</span>
+            <span className="small">AI DIGITAL FORENSICS TIME MACHINE</span>
           </div>
         </div>
         <nav className="landing-nav">
-          <a href="#features">Features</a>
-          <a href="#how-it-works">Process</a>
-          <a href="#capabilities">System</a>
-          <button className="btn-hero-primary" style={{ padding: '10px 20px', fontSize: '0.7rem' }} onClick={() => navigate('/app')}>
-            Access System
+          <a href="#features">Capabilities</a>
+          <a href="#how-it-works">Pipeline</a>
+          <a href="#capabilities">Coverage</a>
+          <button 
+            className="btn-hero-primary" 
+            style={{ padding: '8px 18px', fontSize: '0.8rem' }} 
+            onClick={() => navigate('/app')}
+          >
+            Open Investigation Console &rarr;
           </button>
         </nav>
       </header>
 
       <main className="landing-hero">
-        <div className="hero-badge">Military Grade Digital Forensics</div>
+        <div className="hero-badge">
+          <span className="hero-badge-dot"></span>
+          <span>ENTERPRISE DIGITAL FORENSICS &bull; MITRE ATT&amp;CK CORRELATED</span>
+        </div>
         <h1>
           Trace the <span className="accent">Unseen</span>.<br/>
           Rewind the <span className="accent">Attack</span>.
         </h1>
         <p>
-          Reconstruct breaches with surgical precision. Our autonomous AI engine 
-          correlates billions of data points to reveal the exact trajectory of 
-          cyber adversaries.
+          Reconstruct multi-stage security breaches with second-by-second temporal precision. 
+          Our autonomous AI correlation engine normalizes disparate log streams, builds interactive attack graphs, 
+          and generates executive-ready incident post-mortems in seconds.
         </p>
         <div className="hero-actions">
           <button className="btn-hero-primary" onClick={() => navigate('/app/monitor')}>
-            ⚡ Launch Real-Time Monitor
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 4 10"/><circle cx="12" cy="12" r="2"/>
+            </svg>
+            <span>Launch Live Event Monitor</span>
           </button>
           <button className="btn-hero-secondary" onClick={() => navigate('/app')}>
-            📁 Ingest System Logs
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span>Ingest Host System Logs</span>
           </button>
         </div>
         
         <div className="hero-stats">
           <div className="stat-item">
-            <span className="stat-num">99.9</span>
-            <span className="stat-desc">Analysis Core</span>
+            <span className="stat-num">100%</span>
+            <span className="stat-desc">Local Air-Gapped Privacy</span>
           </div>
           <div className="stat-item">
-            <span className="stat-num">1.2ms</span>
-            <span className="stat-desc">Sync Rate</span>
+            <span className="stat-num">&lt; 2s</span>
+            <span className="stat-desc">AI Kill Chain Synthesis</span>
           </div>
           <div className="stat-item">
-            <span className="stat-num">4K+</span>
-            <span className="stat-desc">Signatures</span>
+            <span className="stat-num">MITRE</span>
+            <span className="stat-desc">ATT&amp;CK Matrix Mapped</span>
           </div>
         </div>
 
@@ -71,15 +90,15 @@ export default function LandingPage() {
                 <div className="t-dot"></div>
                 <div className="t-dot"></div>
               </div>
-              <div className="terminal-title">RECONSTRUCTION_ENGINE::STATUS_OK</div>
+              <div className="terminal-title">incident_analysis_engine.py &bull; TLS 1.3 Active</div>
             </div>
             <div className="terminal-body">
-              <div className="log-line"><span>[SYS]</span> INITIALIZING FORENSIC CORE...</div>
-              <div className="log-line"><span>[SYS]</span> NEURAL LINK ESTABLISHED</div>
-              <div className="log-line" style={{ color: '#00f2ff' }}>[!] ANOMALY DETECTED IN SECTOR 7G</div>
-              <div className="log-line" style={{ color: '#ff00ff' }}>[CRIT] UNAUTHORIZED PRIVILEGE ESCALATION</div>
-              <div className="log-line"><span>[TRC]</span> ORIGIN IP: 185.244.11.X</div>
-              <div className="log-line" style={{ color: '#00ff00' }}>[SUC] TIMELINE CORRELATED SUCCESSFULLY</div>
+              <div className="log-line"><span>[INFO]</span> Initializing Chronos telemetry ingestion pipeline...</div>
+              <div className="log-line"><span>[INFO]</span> Correlating multi-host SSH &amp; sudo authentication events</div>
+              <div className="log-line" style={{ color: '#38bdf8' }}>[DETECT] T1110.001 Brute Force authentication detected from 198.51.100.42</div>
+              <div className="log-line" style={{ color: '#f87171' }}>[CRIT] T1548.003 Privilege Escalation to root confirmed</div>
+              <div className="log-line"><span>[TRACE]</span> Exfiltration beacon identified to external C2 channel</div>
+              <div className="log-line" style={{ color: '#4ade80' }}>[RESOLVED] Full attack chain correlated &bull; Session report ready</div>
               <div className="log-line cursor">_</div>
             </div>
           </div>
@@ -88,101 +107,100 @@ export default function LandingPage() {
 
       <section id="features" className="features-section">
         <div className="section-header">
-          <h2>Investigation Arsenal</h2>
-          <p>State-of-the-art tools for the modern operative.</p>
+          <h2>Forensic Investigation Suite</h2>
+          <p>Enterprise-grade digital forensics tools designed for incident responders and SOC analysts.</p>
         </div>
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>
               </svg>
             </div>
-            <h3>Event Timeline</h3>
-            <p>Scrub through history with millisecond precision to isolate the breach.</p>
+            <h3>Chrono Event Timeline</h3>
+            <p>Scrub through high-volume event logs with millisecond precision to pinpoint the initial compromise vector.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 4 10"/>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><line x1="8.6" y1="7.4" x2="15.4" y2="16.6"/><line x1="15.4" y1="7.4" x2="8.6" y2="16.6"/>
               </svg>
             </div>
-            <h3>Graph Analysis</h3>
-            <p>Trace the flow of attack vectors across your entire infrastructure.</p>
+            <h3>Interactive Attack Graph</h3>
+            <p>Visualize lateral movement, infected hosts, elevated processes, and C2 communication nodes in an interactive graph.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
               </svg>
             </div>
-            <h3>AI Reporting</h3>
-            <p>Autonomous intelligence extraction for executive-ready reports.</p>
+            <h3>AI Incident Intelligence</h3>
+            <p>Automated kill chain mapping, MITRE ATT&amp;CK classification, root cause analysis, and one-click PDF/HTML export.</p>
           </div>
         </div>
       </section>
 
       <section id="how-it-works" className="how-it-works">
         <div className="section-header">
-          <h2>Operation Flow</h2>
+          <h2>Investigation Workflow</h2>
+          <p>Streamlined three-step process from raw logs to courtroom-admissible forensic reports.</p>
         </div>
         <div className="process-flow">
           <div className="process-step">
             <div className="step-num">01</div>
-            <h4>Ingest</h4>
-            <p>Upload raw datasets from any environment.</p>
+            <h4>Ingest &amp; Normalize</h4>
+            <p>Upload raw datasets or stream live local Windows/Linux event logs into the forensic queue.</p>
           </div>
           <div className="process-step">
             <div className="step-num">02</div>
-            <h4>Correlate</h4>
-            <p>Neural engine builds attack relationships.</p>
+            <h4>Correlate &amp; Replay</h4>
+            <p>The AI correlation engine maps relationships, flags IOCs, and reconstructs the sequential timeline.</p>
           </div>
           <div className="process-step">
             <div className="step-num">03</div>
-            <h4>Resolve</h4>
-            <p>Export forensic proof for legal or technical use.</p>
+            <h4>Export Report</h4>
+            <p>Generate cryptographic evidence summaries, mitigation recommendations, and executive briefs.</p>
           </div>
         </div>
       </section>
 
       <section id="capabilities" className="capabilities-section">
         <div className="section-header">
-          <h2>System Capabilities</h2>
+          <h2>Technical Specifications</h2>
         </div>
         <div className="capabilities-grid">
-          <div className="cap-card"><h4>MITRE EXPLOIT MAPPING</h4></div>
-          <div className="cap-card"><h4>NETWORK RECONSTRUCTION</h4></div>
-          <div className="cap-card"><h4>LOG ENTROPY ANALYSIS</h4></div>
-          <div className="cap-card"><h4>AUTONOMOUS TRACING</h4></div>
-          <div className="cap-card"><h4>SIEM INTEGRATION</h4></div>
-          <div className="cap-card"><h4>EVIDENCE RECOVERY</h4></div>
+          <div className="cap-card"><h4>MITRE ATT&amp;CK MAPPING</h4></div>
+          <div className="cap-card"><h4>LATERAL MOVEMENT TRACKING</h4></div>
+          <div className="cap-card"><h4>PROCESS TREE RECONSTRUCTION</h4></div>
+          <div className="cap-card"><h4>AIR-GAPPED AI INFERENCE</h4></div>
+          <div className="cap-card"><h4>REAL-TIME TELEMETRY STREAM</h4></div>
+          <div className="cap-card"><h4>LEGAL-GRADE EVIDENCE EXPORT</h4></div>
         </div>
       </section>
 
       <section className="cta-banner">
-        <h2>Initiate Protocol</h2>
-        <p>Access the world's most advanced forensic suite now.</p>
-        <button className="btn-hero-secondary" style={{ marginTop: '32px', borderColor: '#000', color: '#000' }} onClick={() => navigate('/app')}>
-          Launch Interface
+        <h2>Ready to investigate an incident?</h2>
+        <p>Access the investigation console and analyze live host telemetry or ingest logs.</p>
+        <button className="btn-hero-primary" style={{ marginTop: '24px' }} onClick={() => navigate('/app')}>
+          Open Investigation Console &rarr;
         </button>
       </section>
 
       <footer className="landing-footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <h2>AI FORENSICS TIME MACHINE</h2>
-            <p style={{ color: '#555', marginTop: '12px' }}>Securing the future by investigating the past.</p>
+            <h2>CHRONOS FORENSICS</h2>
+            <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '0.85rem' }}>
+              Autonomous digital forensics and incident timeline reconstruction.
+            </p>
           </div>
-          <div className="footer-links" style={{ display: 'flex', gap: '40px' }}>
+          <div className="footer-links">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontWeight: 800 }}>SYSTEM</span>
-              <a href="#">Status</a>
-              <a href="#">API</a>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontWeight: 800 }}>POLICY</span>
-              <a href="#">Privacy</a>
-              <a href="#">Auth</a>
+              <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#fff' }}>SYSTEM</span>
+              <a href="#features">Features</a>
+              <a href="#how-it-works">Pipeline</a>
+              <a href="/app/settings">Configuration</a>
             </div>
           </div>
         </div>
