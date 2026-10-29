@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { analyzeLiveStream } from '../api';
 import { playCyberClick, playThreatAlert, playWarpEffect } from '../cyberAudio';
+import LogExplanationCard from './LogExplanationCard';
 
 const getWsUrl = () => {
   if (import.meta.env.VITE_API_BASE) {
@@ -27,6 +28,8 @@ export default function LiveMonitor({ onAnalysisComplete }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [hoveredBlip, setHoveredBlip] = useState(null);
   const [coalesceDuplicates, setCoalesceDuplicates] = useState(true);
+  const [expandedLiveIndex, setExpandedLiveIndex] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
   const wsRef = useRef(null);
   const feedEndRef = useRef(null);
   const reconnectRef = useRef(null);
@@ -512,75 +515,109 @@ export default function LiveMonitor({ onAnalysisComplete }) {
             </div>
           )}
 
-          {displayedEvents.map((event, i) => (
-            <div
-              key={i}
-              className={`live-event ${event.is_suspicious ? 'threat' : ''}`}
-              style={{ animation: i === displayedEvents.length - 1 ? 'fadeIn 0.2s ease' : 'none' }}
-            >
-              <span style={{ color: 'var(--accent-cyan)', minWidth: 74, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 600 }}>
-                {getTimeStr(event.timestamp)}
-              </span>
-              <span style={{
-                color: event.is_suspicious ? 'var(--accent-red)' : 'var(--text-primary)',
-                fontWeight: event.is_suspicious ? 700 : 500,
-                minWidth: 160,
-                fontSize: '0.78rem',
-                fontFamily: 'var(--font-mono)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6
-              }}>
-                {event.action}
-                {event.repeats > 1 && (
-                  <span 
-                    style={{ 
-                      background: 'rgba(0, 242, 255, 0.16)', 
-                      color: 'var(--accent-cyan)', 
-                      border: '1px solid rgba(0, 242, 255, 0.45)',
-                      borderRadius: 3,
-                      fontWeight: 700, 
-                      fontSize: '0.66rem',
-                      padding: '1px 5px',
-                      fontFamily: 'var(--font-mono)'
-                    }}
-                    title={`Aggregated burst: ${event.repeats} consecutive events`}
-                  >
-                    ×{event.repeats}
+          {displayedEvents.map((event, i) => {
+            const isExpanded = expandedLiveIndex === i;
+            return (
+              <div
+                key={i}
+                className={`live-event ${event.is_suspicious ? 'threat' : ''} ${isExpanded ? 'expanded' : ''}`}
+                style={{ 
+                  animation: i === displayedEvents.length - 1 ? 'fadeIn 0.2s ease' : 'none',
+                  flexDirection: isExpanded ? 'column' : 'row',
+                  alignItems: isExpanded ? 'stretch' : 'center',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  playCyberClick();
+                  setExpandedLiveIndex(isExpanded ? null : i);
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', flexWrap: 'wrap' }}>
+                  <span style={{ color: 'var(--accent-cyan)', minWidth: 74, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 600 }}>
+                    {getTimeStr(event.timestamp)}
                   </span>
+                  <span style={{
+                    color: event.is_suspicious ? 'var(--accent-red)' : 'var(--text-primary)',
+                    fontWeight: event.is_suspicious ? 700 : 500,
+                    minWidth: 160,
+                    fontSize: '0.78rem',
+                    fontFamily: 'var(--font-mono)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    {event.action}
+                    {event.repeats > 1 && (
+                      <span 
+                        style={{ 
+                          background: 'rgba(0, 242, 255, 0.16)', 
+                          color: 'var(--accent-cyan)', 
+                          border: '1px solid rgba(0, 242, 255, 0.45)',
+                          borderRadius: 3,
+                          fontWeight: 700, 
+                          fontSize: '0.66rem',
+                          padding: '1px 5px',
+                          fontFamily: 'var(--font-mono)'
+                        }}
+                        title={`Aggregated burst: ${event.repeats} consecutive events`}
+                      >
+                        ×{event.repeats}
+                      </span>
+                    )}
+                  </span>
+                  {event.is_suspicious && event.severity && (
+                    <span className={`badge badge-${event.severity}`}>{event.severity}</span>
+                  )}
+                  {event.event_id && (
+                    <span style={{ color: 'var(--accent-cyan)', opacity: 0.75, fontSize: '0.68rem', fontFamily: 'var(--font-mono)' }}>
+                      ID:{event.event_id}
+                    </span>
+                  )}
+                  {event.user && (
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.74rem', background: 'rgba(0,0,0,0.35)', padding: '2px 6px', borderRadius: 3 }}>
+                      USER: {event.user}
+                    </span>
+                  )}
+                  {event.ip_address && (
+                    <span style={{ color: 'var(--accent-blue)', fontSize: '0.74rem', fontFamily: 'var(--font-mono)' }}>
+                      IP: {event.ip_address}
+                    </span>
+                  )}
+                  {event.process && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }} title={event.process}>
+                      CMD: {event.process}
+                    </span>
+                  )}
+                  {event.message && (
+                    <span style={{ color: 'var(--text-secondary)', opacity: 0.8, fontSize: '0.68rem', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }} title={event.message}>
+                      MSG: {event.message}
+                    </span>
+                  )}
+                  {event.mitre_technique && <span className="mitre-tag">{event.mitre_technique}</span>}
+                  
+                  <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: isExpanded ? 'var(--accent-cyan)' : 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    {isExpanded ? '▲ COLLAPSE' : '▼ DETAILS'}
+                  </span>
+                </div>
+
+                {isExpanded && (
+                  <div style={{ marginTop: 8, width: '100%' }}>
+                    <LogExplanationCard
+                      event={event}
+                      globalIndex={i}
+                      copiedId={copiedId}
+                      copyLog={(text, id) => {
+                        playCyberClick();
+                        navigator.clipboard?.writeText(text);
+                        setCopiedId(id);
+                        setTimeout(() => setCopiedId(null), 1500);
+                      }}
+                    />
+                  </div>
                 )}
-              </span>
-              {event.is_suspicious && event.severity && (
-                <span className={`badge badge-${event.severity}`}>{event.severity}</span>
-              )}
-              {event.event_id && (
-                <span style={{ color: 'var(--accent-cyan)', opacity: 0.75, fontSize: '0.68rem', fontFamily: 'var(--font-mono)' }}>
-                  ID:{event.event_id}
-                </span>
-              )}
-              {event.user && (
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.74rem', background: 'rgba(0,0,0,0.35)', padding: '2px 6px', borderRadius: 3 }}>
-                  USER: {event.user}
-                </span>
-              )}
-              {event.ip_address && (
-                <span style={{ color: 'var(--accent-blue)', fontSize: '0.74rem', fontFamily: 'var(--font-mono)' }}>
-                  IP: {event.ip_address}
-                </span>
-              )}
-              {event.process && (
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }} title={event.process}>
-                  CMD: {event.process}
-                </span>
-              )}
-              {event.message && (
-                <span style={{ color: 'var(--text-secondary)', opacity: 0.8, fontSize: '0.68rem', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }} title={event.message}>
-                  MSG: {event.message}
-                </span>
-              )}
-              {event.mitre_technique && <span className="mitre-tag">{event.mitre_technique}</span>}
-            </div>
-          ))}
+              </div>
+            );
+          })}
           <div ref={feedEndRef} />
         </div>
       </div>

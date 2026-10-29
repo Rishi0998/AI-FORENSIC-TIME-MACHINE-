@@ -7,7 +7,8 @@ import uuid
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict, Any
+from pydantic import BaseModel
 from datetime import datetime
 
 import sys, os
@@ -19,7 +20,7 @@ from services.parser import parse_logs
 from services.detector import detect_suspicious_events, calculate_risk_score
 from services.analyzer import build_attack_chains, get_attack_narrative
 from services.graph import build_attack_graph, generate_weaponized_attack_graph
-from services.ai_explainer import generate_explanation
+from services.ai_explainer import generate_explanation, explain_single_event
 from services.log_fetcher import get_real_log, list_available_sources, get_windows_log_channels
 from services.monitor import start_monitoring, stop_monitoring, get_monitor_stats
 
@@ -251,6 +252,29 @@ async def analyze_live_stream(
         "risk_level": risk_level,
         "message": f"Successfully analyzed {len(events)} live stream events",
     }
+
+
+class ExplainEventRequest(BaseModel):
+    event: Dict[str, Any]
+    use_ai: Optional[bool] = False
+
+
+@router.post("/explain-event")
+async def explain_event_endpoint(req: ExplainEventRequest):
+    """
+    Generate an authoritative, detailed cybersecurity explanation of a single log event.
+    Provides immediate rich rule-based DFIR breakdown, plus optional Gemini AI deep-dive.
+    """
+    try:
+        explanation = await run_in_threadpool(
+            explain_single_event,
+            req.event,
+            req.use_ai,
+            os.getenv("GEMINI_API_KEY")
+        )
+        return explanation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to explain log event: {str(e)}")
 
 
 @router.get("/events")

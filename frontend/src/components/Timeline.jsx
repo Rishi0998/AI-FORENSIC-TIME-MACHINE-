@@ -4,6 +4,7 @@ import { Bar } from 'react-chartjs-2';
 import { getTimeline } from '../api';
 import { playCyberClick, playTargetLock, playThreatAlert } from '../cyberAudio';
 import CyberGlitchText from './CyberGlitchText';
+import LogExplanationCard from './LogExplanationCard';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
@@ -451,33 +452,12 @@ export default function Timeline({ sessionId }) {
                 </div>
 
                 {isExpanded && (
-                  <div style={{ marginTop: 10, padding: '12px 14px', background: 'rgba(2,5,14,0.96)', border: '1px solid rgba(0,242,255,0.3)', borderRadius: '2px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, borderBottom: '1px solid rgba(0,242,254,0.1)', paddingBottom: 6 }}>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span className="pulse-dot" style={{ background: 'var(--accent-cyan)' }} />
-                        DECODED FORENSIC TELEMETRY BUFFER
-                      </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); copyLog(event.raw_log || JSON.stringify(event, null, 2), globalIndex); }}
-                        className={`cyber-copy-btn ${copiedId === globalIndex ? 'copied' : ''}`}
-                      >
-                        {copiedId === globalIndex ? '✓ BUFFER COPIED' : '📋 COPY RAW PAYLOAD'}
-                      </button>
-                    </div>
-                    <pre style={{ 
-                      fontFamily: 'var(--font-mono)', 
-                      fontSize: '0.72rem', 
-                      color: '#94a3b8', 
-                      overflowX: 'auto', 
-                      whiteSpace: 'pre-wrap', 
-                      wordBreak: 'break-all',
-                      margin: 0,
-                      lineHeight: 1.5,
-                      maxHeight: 220
-                    }}>
-                      {event.raw_log || JSON.stringify(event, null, 2)}
-                    </pre>
-                  </div>
+                  <LogExplanationCard
+                    event={event}
+                    globalIndex={globalIndex}
+                    copiedId={copiedId}
+                    copyLog={copyLog}
+                  />
                 )}
               </div>
             );

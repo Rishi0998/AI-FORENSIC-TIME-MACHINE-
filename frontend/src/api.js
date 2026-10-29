@@ -68,4 +68,9 @@ export async function getLocalLogChannels() {
   return data;
 }
 
+export async function explainEvent(event, useAi = false) {
+  const { data } = await api.post('/explain-event', { event, use_ai: useAi });
+  return data;
+}
+
 export default api;
