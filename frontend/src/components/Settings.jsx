@@ -125,7 +125,7 @@ export default function Settings() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
           <InfoItem label="Backend" value="FastAPI + SQLite" />
           <InfoItem label="Frontend" value="React + Vite" />
-          <InfoItem label="AI Models" value="Gemini 2.0 Flash, GPT-4o-mini" />
+          <InfoItem label="AI Models" value="Gemini 3.5 Flash, GPT-4o-mini" />
           <InfoItem label="Graph Engine" value="NetworkX + Cytoscape.js" />
           <InfoItem label="API Endpoint" value="http://localhost:8000" />
           <InfoItem label="Version" value="3.0.0" />

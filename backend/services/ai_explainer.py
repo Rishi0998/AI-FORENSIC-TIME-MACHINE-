@@ -25,23 +25,27 @@ def generate_explanation(events: List[Dict], chains: List[Dict],
     """
     context = _build_context(events, chains, risk_score, risk_level)
 
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
+    ai_model = os.getenv("AI_MODEL", "auto")
+
     explanation = None
     model_used = "rule-based"
 
     # 1. Try Gemini (Google AI)
-    if AI_MODEL in ("gemini", "auto") and GEMINI_API_KEY:
-        explanation = _call_gemini(context)
+    if ai_model in ("gemini", "auto") and gemini_key:
+        explanation = _call_gemini(context, api_key=gemini_key)
         if explanation:
             model_used = "gemini"
 
     # 2. Try OpenAI
-    if not explanation and AI_MODEL in ("openai", "auto") and OPENAI_API_KEY:
+    if not explanation and ai_model in ("openai", "auto") and openai_key:
         explanation = _call_openai(context)
         if explanation:
             model_used = "openai"
 
     # 3. Try Ollama (local)
-    if not explanation and AI_MODEL in ("ollama", "auto"):
+    if not explanation and ai_model in ("ollama", "auto"):
         explanation = _call_ollama(context)
         if explanation:
             model_used = "ollama"
@@ -98,15 +102,24 @@ def _build_context(events: List[Dict], chains: List[Dict],
     return "\n".join(lines)
 
 
-def _call_gemini(context: str) -> Optional[str]:
-    """Call Google Gemini API for explanation generation using new google-genai SDK."""
+def _call_gemini(context: str, api_key: Optional[str] = None) -> Optional[str]:
+    """Call Google Gemini API for explanation generation using google-genai SDK."""
     try:
         from google import genai
 
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        key = api_key or os.getenv("GEMINI_API_KEY")
+        if not key:
+            return None
 
-        # Try models in order of preference
-        models_to_try = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"]
+        client = genai.Client(api_key=key)
+
+        # Try active models in order of preference
+        models_to_try = [
+            "gemini-3.5-flash-lite",
+            "gemini-3.5-flash",
+            "gemini-2.5-flash",
+            "gemini-flash-latest",
+        ]
 
         for model_name in models_to_try:
             try:

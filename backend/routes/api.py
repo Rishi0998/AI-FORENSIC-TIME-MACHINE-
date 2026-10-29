@@ -569,13 +569,27 @@ async def test_ai():
 
         from google import genai
         client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents="Respond with only: OK"
-        )
-        if response and response.text:
-            return {"success": True, "model": "gemini-2.0-flash-lite", "message": f"Response: {response.text.strip()}"}
-        return {"success": False, "message": "Empty response from model"}
+
+        models_to_try = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"]
+        last_error = None
+
+        for model in models_to_try:
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents="Respond with only: OK"
+                )
+                if response and response.text:
+                    return {
+                        "success": True,
+                        "model": model,
+                        "message": f"Connection verified! {model} responded: {response.text.strip()}"
+                    }
+            except Exception as err:
+                last_error = err
+                continue
+
+        return {"success": False, "message": str(last_error or "Empty response from model")}
     except Exception as e:
         return {"success": False, "message": str(e)}
 
