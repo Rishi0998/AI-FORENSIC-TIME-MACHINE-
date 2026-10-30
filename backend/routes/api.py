@@ -21,6 +21,7 @@ from services.detector import detect_suspicious_events, calculate_risk_score
 from services.analyzer import build_attack_chains, get_attack_narrative
 from services.graph import build_attack_graph, generate_weaponized_attack_graph
 from services.ai_explainer import generate_explanation, explain_single_event
+from services.mitre import build_mitre_matrix
 from services.log_fetcher import get_real_log, list_available_sources, get_windows_log_channels
 from services.monitor import start_monitoring, stop_monitoring, get_monitor_stats
 
@@ -466,6 +467,27 @@ async def get_analysis(
             "event_ids": c.event_ids,
         } for c in chains],
     }
+
+
+@router.get("/mitre-matrix")
+async def get_mitre_matrix(
+    session_id: Optional[str] = Query(None),
+    use_demo: bool = Query(False),
+    db: Session = Depends(get_db)
+):
+    """
+    Get full Enterprise MITRE ATT&CK Matrix dynamically correlated with session logs.
+    """
+    events = []
+    if session_id:
+        if session_id in session_cache:
+            events = session_cache[session_id].get("events", [])
+        else:
+            db_events = db.query(Event).filter(Event.session_id == session_id).order_by(Event.timestamp).all()
+            events = [_db_event_to_dict(e) for e in db_events]
+
+    matrix_data = build_mitre_matrix(events, use_demo=use_demo or (not events))
+    return matrix_data
 
 
 @router.get("/replay")

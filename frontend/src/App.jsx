@@ -5,6 +5,7 @@ import Timeline from './components/Timeline';
 import Graph from './components/Graph';
 import Replay from './components/Replay';
 import Analysis from './components/Analysis';
+import MitreMatrix from './components/MitreMatrix';
 import LiveMonitor from './components/LiveMonitor';
 import ReportExport from './components/ReportExport';
 import Settings from './components/Settings';
@@ -182,6 +183,10 @@ function Sidebar({ sessionId, sessionInfo }) {
 
         <div className="nav-section">
           <div className="nav-section-title">Threat Intelligence</div>
+          <NavLink to="/app/mitre" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
+            <span className="nav-icon"><IconMatrix /></span>
+            MITRE ATT&CK Matrix
+          </NavLink>
           <NavLink to="/app/analysis" className={({ isActive }) => `nav-link ${!sessionId ? 'disabled' : ''} ${isActive ? 'active' : ''}`} onClick={playCyberClick}>
             <span className="nav-icon"><IconAnalysis /></span>
             AI Kill Chain Analysis
@@ -380,6 +385,7 @@ const PAGE_TITLES = {
   '/app/timeline': 'Event Reconstruction Timeline',
   '/app/graph': 'Attack Vector Graph',
   '/app/replay': 'Forensic Replay Scrubber',
+  '/app/mitre': 'MITRE ATT&CK® Tactical Matrix Heatmap',
   '/app/analysis': 'AI Neural Incident Analysis',
   '/app/report': 'Forensic Report Export',
   '/app/settings': 'AI Engine Configuration',
@@ -413,6 +419,7 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
             <Route path="/timeline" element={sessionId ? <Timeline sessionId={sessionId} /> : <NoSession />} />
             <Route path="/graph" element={sessionId ? <Graph sessionId={sessionId} /> : <NoSession />} />
             <Route path="/replay" element={sessionId ? <Replay sessionId={sessionId} /> : <NoSession />} />
+            <Route path="/mitre" element={<MitreMatrix sessionId={sessionId} />} />
             <Route path="/analysis" element={sessionId ? <Analysis sessionId={sessionId} /> : <NoSession />} />
             <Route path="/report" element={sessionId ? <ReportExport sessionId={sessionId} sessionInfo={sessionInfo} /> : <NoSession />} />
             <Route path="/settings" element={<Settings />} />
@@ -567,6 +574,17 @@ function IconSettings() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  );
+}
+
+function IconMatrix() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7"/>
+      <rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/>
     </svg>
   );
 }

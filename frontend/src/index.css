@@ -1999,6 +1999,7 @@ tr:hover td {
 }
 
 /* Cyber filter buttons */
+.filter-group,
 .filter-group-cyber {
   display: flex;
   align-items: center;
@@ -2006,6 +2007,7 @@ tr:hover td {
   flex-wrap: wrap;
 }
 
+.filter-btn,
 .filter-btn-cyber {
   background: rgba(2, 6, 16, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -2023,12 +2025,14 @@ tr:hover td {
   transition: all 0.15s ease;
 }
 
+.filter-btn:hover,
 .filter-btn-cyber:hover {
   background: rgba(0, 242, 254, 0.1);
   border-color: rgba(0, 242, 254, 0.4);
   color: #fff;
 }
 
+.filter-btn.active,
 .filter-btn-cyber.active {
   background: rgba(0, 242, 254, 0.18);
   border-color: var(--accent-cyan);
@@ -2036,6 +2040,7 @@ tr:hover td {
   box-shadow: 0 0 14px rgba(0, 242, 254, 0.35);
 }
 
+.filter-btn.danger.active,
 .filter-btn-cyber.danger.active {
   background: rgba(255, 0, 85, 0.22);
   border-color: #ff0055;
@@ -2043,6 +2048,7 @@ tr:hover td {
   box-shadow: 0 0 16px rgba(255, 0, 85, 0.45);
 }
 
+.filter-btn.high.active,
 .filter-btn-cyber.high.active {
   background: rgba(255, 94, 0, 0.22);
   border-color: #ff5e00;
@@ -2050,6 +2056,7 @@ tr:hover td {
   box-shadow: 0 0 16px rgba(255, 94, 0, 0.45);
 }
 
+.filter-btn.warning.active,
 .filter-btn-cyber.warning.active {
   background: rgba(255, 170, 0, 0.22);
   border-color: #ffaa00;
@@ -2064,6 +2071,7 @@ tr:hover td {
   font-size: 0.6rem;
 }
 
+.filter-btn.active .filter-count-badge,
 .filter-btn-cyber.active .filter-count-badge {
   background: rgba(0, 242, 254, 0.25);
 }

@@ -418,18 +418,22 @@ export default function LiveMonitor({ onAnalysisComplete }) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
-              <div className="filter-group">
+              <div className="filter-group-cyber">
                 <button
-                  className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                  className={`filter-btn-cyber ${filter === 'all' ? 'active' : ''}`}
                   onClick={() => { playCyberClick(); setFilter('all'); }}
                 >
-                  ALL TELEMETRY ({events.length})
+                  <span>ALL TELEMETRY</span>
+                  <span className="filter-count-badge">{events.length}</span>
                 </button>
                 <button
-                  className={`filter-btn danger ${filter === 'suspicious' ? 'active' : ''}`}
-                  onClick={() => { playCyberClick(); setFilter('suspicious'); }}
+                  className={`filter-btn-cyber danger ${filter === 'suspicious' ? 'active' : ''}`}
+                  onClick={() => { playThreatAlert(); setFilter('suspicious'); }}
                 >
-                  IOC DETECTIONS ({suspiciousCount})
+                  <span>IOC DETECTIONS</span>
+                  <span className="filter-count-badge" style={{ color: suspiciousCount > 0 ? '#ff0055' : undefined }}>
+                    {suspiciousCount}
+                  </span>
                 </button>
               </div>
 

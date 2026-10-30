@@ -73,4 +73,11 @@ export async function explainEvent(event, useAi = false) {
   return data;
 }
 
+export async function getMitreMatrix(sessionId, useDemo = false) {
+  const { data } = await api.get('/mitre-matrix', {
+    params: { session_id: sessionId, use_demo: useDemo },
+  });
+  return data;
+}
+
 export default api;
