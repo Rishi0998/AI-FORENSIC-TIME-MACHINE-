@@ -42,9 +42,9 @@ export async function getTimeline(sessionId) {
   return data;
 }
 
-export async function getGraph(sessionId, recalculate = false, sample = false) {
+export async function getGraph(sessionId, recalculate = false) {
   const { data } = await api.get('/graph', {
-    params: { session_id: sessionId, recalculate, sample },
+    params: { session_id: sessionId, recalculate },
   });
   return data;
 }
@@ -73,9 +73,9 @@ export async function explainEvent(event, useAi = false) {
   return data;
 }
 
-export async function getMitreMatrix(sessionId, useDemo = false) {
+export async function getMitreMatrix(sessionId) {
   const { data } = await api.get('/mitre-matrix', {
-    params: { session_id: sessionId, use_demo: useDemo },
+    params: { session_id: sessionId },
   });
   return data;
 }

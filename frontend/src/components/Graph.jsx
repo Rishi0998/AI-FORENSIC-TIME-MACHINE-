@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import { getGraph } from '../api';
@@ -140,8 +141,8 @@ export default function Graph({ sessionId }) {
   const [radarEnabled, setRadarEnabled] = useState(true);
   const [blastActive, setBlastActive] = useState(false);
   const [quarantinedNodes, setQuarantinedNodes] = useState(new Set());
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -152,18 +153,17 @@ export default function Graph({ sessionId }) {
   const shockwavesRef = useRef([]);
   const radarAngleRef = useRef(0);
 
-  const fetchGraphData = useCallback((recalc = false, sample = false) => {
-    if (!sessionId && !sample) {
+  const fetchGraphData = useCallback((recalc = false) => {
+    if (!sessionId) {
       setLoading(false);
       return;
     }
     setLoading(true);
-    getGraph(sample ? 'demo' : sessionId, recalc, sample)
+    getGraph(sessionId, recalc)
       .then((data) => {
         setGraphData(data.graph?.elements);
         setMetrics(data.graph?.metrics);
         setLoading(false);
-        if (sample) setIsDemoMode(true);
       })
       .catch(() => {
         setLoading(false);
@@ -171,7 +171,7 @@ export default function Graph({ sessionId }) {
   }, [sessionId]);
 
   useEffect(() => {
-    fetchGraphData(false, false);
+    fetchGraphData(false);
   }, [fetchGraphData]);
 
   const initCytoscape = useCallback(() => {
@@ -941,7 +941,7 @@ export default function Graph({ sessionId }) {
     );
   }
 
-  if (!graphData || (!graphData.nodes?.length && !isDemoMode)) {
+  if (!graphData || !graphData.nodes?.length) {
     return (
       <div className="card fade-in" style={{ padding: '60px 24px', textAlign: 'center' }}>
         <div className="empty-state">
@@ -949,19 +949,29 @@ export default function Graph({ sessionId }) {
           <h3 style={{ fontFamily: 'var(--font-heading)', letterSpacing: '0.08em', color: 'var(--text-primary)', marginBottom: 8 }}>
             NO TOPOLOGICAL GRAPH LOADED
           </h3>
-          <p style={{ color: 'var(--text-muted)', maxWidth: 520, margin: '0 auto 24px' }}>
-            Upload forensic logs, extract local Windows/Linux channels, or immediately launch the full weaponized APT attack graph simulation.
+          <p style={{ color: 'var(--text-muted)', maxWidth: 520, margin: '0 auto 24px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', lineHeight: 1.6 }}>
+            No active session detected. Ingest real operating system logs or stream live Windows host telemetry to reconstruct the topological attack graph.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <button
               className="btn btn-primary"
               onClick={() => {
-                playWarpEffect();
-                fetchGraphData(false, true);
+                playCyberClick();
+                navigate('/app');
               }}
-              style={{ padding: '10px 24px', fontSize: '0.9rem' }}
+              style={{ padding: '8px 20px', fontSize: '0.85rem' }}
             >
-              🧬 LOAD WEAPONIZED APT ATTACK DEMO
+              📥 INGEST REAL LOGS
+            </button>
+            <button
+              className="btn btn-outline"
+              onClick={() => {
+                playCyberClick();
+                navigate('/app/monitor');
+              }}
+              style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+            >
+              📡 LAUNCH LIVE MONITOR
             </button>
           </div>
         </div>
@@ -990,8 +1000,8 @@ export default function Graph({ sessionId }) {
                   width: 12,
                   height: 12,
                   borderRadius: '50%',
-                  background: isDemoMode ? '#ff0055' : 'var(--accent-cyan)',
-                  boxShadow: `0 0 14px ${isDemoMode ? '#ff0055' : 'var(--accent-cyan)'}`,
+                  background: 'var(--accent-cyan)',
+                  boxShadow: '0 0 14px var(--accent-cyan)',
                 }}
               ></div>
               <div
@@ -1003,7 +1013,7 @@ export default function Graph({ sessionId }) {
                   color: '#fff',
                 }}
               >
-                {isDemoMode ? '⚔️ WEAPONIZED APT KILL CHAIN SIMULATION' : 'TOPOLOGICAL CYBER THREAT ATTACK GRAPH'}
+                TOPOLOGICAL CYBER THREAT ATTACK GRAPH
               </div>
             </div>
             <p
@@ -1023,24 +1033,12 @@ export default function Graph({ sessionId }) {
               className="btn btn-sm btn-outline"
               onClick={() => {
                 playCyberClick();
-                fetchGraphData(true, false);
+                fetchGraphData(true);
               }}
               title="Re-run heuristic graph generator with latest topology logic"
               style={{ fontSize: '0.72rem', borderColor: 'rgba(0,242,255,0.4)' }}
             >
               🔄 RE-SYNTHESIZE MATRIX
-            </button>
-
-            <button
-              className={`btn btn-sm ${isDemoMode ? 'btn-danger' : 'btn-outline'}`}
-              onClick={() => {
-                playWarpEffect();
-                fetchGraphData(false, true);
-              }}
-              title="Load full 16-node APT Ransomware lateral movement attack graph"
-              style={{ fontSize: '0.72rem', borderColor: '#ff0055', color: '#ff7799' }}
-            >
-              🧬 LOAD APT ATTACK DEMO
             </button>
 
             <button

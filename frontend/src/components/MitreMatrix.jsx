@@ -12,15 +12,13 @@ export default function MitreMatrix({ sessionId }) {
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'detected' | 'critical'
   const [copiedSigma, setCopiedSigma] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const navigate = useNavigate();
 
-  const fetchMatrix = (forceDemo = false) => {
+  const fetchMatrix = () => {
     setLoading(true);
-    getMitreMatrix(sessionId, forceDemo)
+    getMitreMatrix(sessionId)
       .then((data) => {
         setMatrixData(data);
-        setIsDemoMode(data?.summary?.is_demo || forceDemo);
         setLoading(false);
         // Pre-select first detected technique if available
         if (data?.tactics) {
@@ -40,13 +38,8 @@ export default function MitreMatrix({ sessionId }) {
   };
 
   useEffect(() => {
-    fetchMatrix(false);
+    fetchMatrix();
   }, [sessionId]);
-
-  const handleLoadDemo = () => {
-    playWarpEffect();
-    fetchMatrix(true);
-  };
 
   const handleCopySigma = (yaml) => {
     playCyberClick();
@@ -62,7 +55,7 @@ export default function MitreMatrix({ sessionId }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `mitre_attack_matrix_${sessionId || 'demo'}.json`;
+    a.download = `mitre_attack_matrix_${sessionId || 'telemetry'}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setCopiedJson(true);
@@ -175,26 +168,6 @@ export default function MitreMatrix({ sessionId }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {isDemoMode && (
-              <span
-                style={{
-                  background: 'rgba(255, 0, 85, 0.15)',
-                  border: '1px solid #ff0055',
-                  color: '#ff0055',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.68rem',
-                  padding: '3px 8px',
-                  borderRadius: 2,
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                }}
-              >
-                ● APT WEAPONIZED DEMO ACTIVE
-              </span>
-            )}
-            <button className="btn btn-sm btn-outline" onClick={handleLoadDemo} title="Load 16-stage APT29/BlackCat attack kill chain">
-              <span>⚡ LOAD APT DEMO SCENARIO</span>
-            </button>
             <button className="btn btn-sm btn-outline" onClick={handleExportBlueprint}>
               <span>{copiedJson ? '✓ EXPORTED' : '📥 EXPORT MATRIX JSON'}</span>
             </button>

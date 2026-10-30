@@ -163,13 +163,14 @@ def _match_event_to_mitre(event: Dict) -> List[Tuple[str, str]]:
     return list(set(matches))
 
 
-def build_mitre_matrix(events: List[Dict], use_demo: bool = False) -> Dict:
+def build_mitre_matrix(events: List[Dict]) -> Dict:
     """
     Build complete Enterprise MITRE ATT&CK Matrix model with session detection states.
+    Strictly correlates real event telemetry without synthetic/mock data.
     """
     technique_events = {}  # tech_id -> list of events
     
-    # Process events
+    # Process real events
     for ev in events:
         matched_pairs = _match_event_to_mitre(ev)
         for _, tech_id in matched_pairs:
@@ -191,40 +192,24 @@ def build_mitre_matrix(events: List[Dict], use_demo: bool = False) -> Dict:
         for t in techniques_list:
             t_id = t["id"]
             matched_evs = technique_events.get(t_id, [])
-            
-            # If demo mode is active and no real events, populate realistic APT flags
-            is_demo_detected = False
-            if use_demo and not events:
-                if t_id in ("T1190", "T1059.001", "T1505.003", "T1055", "T1003.001", "T1569.002", "T1021.002", "T1071.001", "T1048", "T1486", "T1490", "T1562.001", "T1110"):
-                    is_demo_detected = True
+            has_detection = len(matched_evs) > 0
 
-            has_detection = len(matched_evs) > 0 or is_demo_detected
-
-            # Calculate technique severity
+            # Calculate technique severity from real events
             sev = "low"
             if has_detection:
                 tactics_with_detections.add(tac_id)
                 total_detected_techniques.add(t_id)
 
-                if is_demo_detected and not matched_evs:
-                    if t_id in ("T1003.001", "T1486", "T1490", "T1055", "T1569.002"):
-                        sev = "critical"
-                    elif t_id in ("T1190", "T1059.001", "T1021.002", "T1048", "T1562.001"):
-                        sev = "high"
-                    else:
-                        sev = "medium"
-                    event_count = 12 if sev == "critical" else 6
+                event_count = len(matched_evs)
+                sevs = [e.get("severity", "low").lower() for e in matched_evs]
+                if "critical" in sevs:
+                    sev = "critical"
+                elif "high" in sevs:
+                    sev = "high"
+                elif "medium" in sevs:
+                    sev = "medium"
                 else:
-                    event_count = len(matched_evs)
-                    sevs = [e.get("severity", "low").lower() for e in matched_evs]
-                    if "critical" in sevs:
-                        sev = "critical"
-                    elif "high" in sevs:
-                        sev = "high"
-                    elif "medium" in sevs:
-                        sev = "medium"
-                    else:
-                        sev = "low"
+                    sev = "low"
 
                 severity_counts[sev] += 1
             else:
@@ -284,7 +269,6 @@ def build_mitre_matrix(events: List[Dict], use_demo: bool = False) -> Dict:
             "medium_techniques": severity_counts["medium"],
             "low_techniques": severity_counts["low"],
             "total_events_analyzed": len(events),
-            "is_demo": use_demo and not events
         },
         "tactics": tactics_output
     }

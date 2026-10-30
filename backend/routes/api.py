@@ -19,7 +19,7 @@ from models.event import Event, AttackChain, AnalysisResult
 from services.parser import parse_logs
 from services.detector import detect_suspicious_events, calculate_risk_score
 from services.analyzer import build_attack_chains, get_attack_narrative
-from services.graph import build_attack_graph, generate_weaponized_attack_graph
+from services.graph import build_attack_graph
 from services.ai_explainer import generate_explanation, explain_single_event
 from services.mitre import build_mitre_matrix
 from services.log_fetcher import get_real_log, list_available_sources, get_windows_log_channels
@@ -353,16 +353,9 @@ async def get_timeline(
 async def get_graph(
     session_id: str = Query(...),
     recalculate: bool = Query(False),
-    sample: bool = Query(False),
     db: Session = Depends(get_db)
 ):
-    """Get attack graph data for Cytoscape.js visualization."""
-    if sample or session_id in ("demo", "sample", "simulation", "apt"):
-        return {
-            "session_id": session_id,
-            "graph": generate_weaponized_attack_graph(),
-        }
-
+    """Get attack graph data for Cytoscape.js visualization from real telemetry."""
     # If recalculate requested or session not in cache, rebuild with latest engine
     if recalculate or (session_id not in session_cache):
         db_events = db.query(Event).filter(
@@ -413,12 +406,27 @@ async def get_graph(
         AnalysisResult.session_id == session_id
     ).first()
 
-    if not analysis or not analysis.graph_data:
-        raise HTTPException(404, "Graph data not found for this session")
+    if analysis and analysis.graph_data:
+        return {
+            "session_id": session_id,
+            "graph": analysis.graph_data,
+        }
 
     return {
         "session_id": session_id,
-        "graph": analysis.graph_data,
+        "graph": {
+            "elements": {"nodes": [], "edges": []},
+            "metrics": {
+                "node_count": 0,
+                "edge_count": 0,
+                "density": 0,
+                "unique_users": 0,
+                "unique_ips": 0,
+                "unique_processes": 0,
+                "compromised_count": 0,
+                "threat_ratio": 0,
+            }
+        },
     }
 
 
@@ -472,11 +480,10 @@ async def get_analysis(
 @router.get("/mitre-matrix")
 async def get_mitre_matrix(
     session_id: Optional[str] = Query(None),
-    use_demo: bool = Query(False),
     db: Session = Depends(get_db)
 ):
     """
-    Get full Enterprise MITRE ATT&CK Matrix dynamically correlated with session logs.
+    Get full Enterprise MITRE ATT&CK Matrix dynamically correlated with real session logs.
     """
     events = []
     if session_id:
@@ -486,7 +493,7 @@ async def get_mitre_matrix(
             db_events = db.query(Event).filter(Event.session_id == session_id).order_by(Event.timestamp).all()
             events = [_db_event_to_dict(e) for e in db_events]
 
-    matrix_data = build_mitre_matrix(events, use_demo=use_demo or (not events))
+    matrix_data = build_mitre_matrix(events)
     return matrix_data
 
 
