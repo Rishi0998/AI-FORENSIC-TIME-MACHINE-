@@ -412,42 +412,55 @@ export default function Timeline({ sessionId }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', flexWrap: 'wrap' }}>
-                  <span className="event-time" style={{ color: 'var(--accent-cyan)', minWidth: 68, fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                  <span className="event-time" style={{ color: 'var(--accent-cyan)', minWidth: 68, fontFamily: 'var(--font-mono)', fontSize: '0.74rem', fontWeight: 600 }}>
                     {event.timestamp?.split('T')[1]?.substring(0, 8) || event.timestamp || '—'}
                   </span>
-                  <span className="event-action" style={{ color: '#fff', fontWeight: 600, fontSize: '0.82rem' }}>
+                  <span className="event-action" style={{ color: '#ffffff', fontFamily: 'var(--font-tech)', fontWeight: 700, fontSize: '0.94rem', letterSpacing: '0.04em' }}>
                     {event.action}
                   </span>
 
                   <span className="event-meta" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span className={`stat-pill-cyber ${sev === 'critical' ? 'danger' : sev === 'high' ? 'danger' : sev === 'medium' ? 'warning' : ''}`} style={{ fontSize: '0.58rem' }}>
+                    <span className={`stat-pill-cyber ${sev === 'critical' ? 'danger' : sev === 'high' ? 'danger' : sev === 'medium' ? 'warning' : ''}`} style={{ fontSize: '0.62rem', fontFamily: 'var(--font-tech)', fontWeight: 700, letterSpacing: '0.06em' }}>
                       {sev.toUpperCase()}
                     </span>
                     {event.mitre_technique && (
-                      <span className="stat-pill-cyber warning" style={{ fontSize: '0.58rem' }}>
+                      <span className="stat-pill-cyber warning" style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)' }}>
                         MITRE:{event.mitre_technique}
                       </span>
                     )}
                     {event.user && (
-                      <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', background: 'rgba(255,255,255,0.04)', padding: '2px 5px', borderRadius: 2 }}>
+                      <span style={{ color: '#cbd5e1', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 2 }}>
                         USER:{event.user}
                       </span>
                     )}
                     {event.ip_address && (
-                      <span style={{ color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', background: 'rgba(0,242,254,0.06)', padding: '2px 5px', borderRadius: 2 }}>
+                      <span style={{ color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', background: 'rgba(0,242,254,0.08)', padding: '2px 6px', borderRadius: 2 }}>
                         IP:{event.ip_address}
                       </span>
                     )}
                     {event.process && (
-                      <span style={{ color: '#00ff88', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', background: 'rgba(0,255,136,0.06)', padding: '2px 5px', borderRadius: 2 }}>
+                      <span style={{ color: '#00ff88', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', background: 'rgba(0,255,136,0.08)', padding: '2px 6px', borderRadius: 2 }}>
                         PROC:{event.process}
                       </span>
                     )}
                     {event.detection_rule && (
-                      <span style={{ color: 'var(--accent-purple)', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', background: 'rgba(168,85,247,0.08)', padding: '2px 5px', borderRadius: 2 }}>
+                      <span style={{ color: 'var(--accent-purple)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)', background: 'rgba(168,85,247,0.1)', padding: '2px 6px', borderRadius: 2 }}>
                         RULE:{event.detection_rule}
                       </span>
                     )}
+                    <span style={{ 
+                      color: isExpanded ? 'var(--accent-cyan)' : 'var(--text-muted)', 
+                      fontFamily: 'var(--font-tech)', 
+                      fontSize: '0.72rem', 
+                      fontWeight: 700, 
+                      letterSpacing: '0.06em',
+                      padding: '2px 6px',
+                      background: isExpanded ? 'rgba(0, 242, 255, 0.12)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${isExpanded ? 'rgba(0, 242, 255, 0.3)' : 'transparent'}`,
+                      borderRadius: 2
+                    }}>
+                      {isExpanded ? '▲ COLLAPSE' : '▼ FORENSICS'}
+                    </span>
                   </span>
                 </div>
 

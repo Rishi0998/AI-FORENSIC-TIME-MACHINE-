@@ -541,11 +541,12 @@ export default function LiveMonitor({ onAnalysisComplete }) {
                     {getTimeStr(event.timestamp)}
                   </span>
                   <span style={{
-                    color: event.is_suspicious ? 'var(--accent-red)' : 'var(--text-primary)',
-                    fontWeight: event.is_suspicious ? 700 : 500,
+                    color: event.is_suspicious ? 'var(--accent-red)' : '#ffffff',
+                    fontWeight: 700,
                     minWidth: 160,
-                    fontSize: '0.78rem',
-                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.92rem',
+                    fontFamily: 'var(--font-tech)',
+                    letterSpacing: '0.04em',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 6

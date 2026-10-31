@@ -24,7 +24,6 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
       .catch((err) => {
         console.warn('Backend explanation fetch failed, using client-side fallback:', err);
         if (isMounted) {
-          // Instant client-side fallback
           setExplanation(buildClientFallback(event));
           setLoading(false);
         }
@@ -110,7 +109,26 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
     };
   }
 
-  // Render markdown text cleanly
+  // Format playbook text with high-tech inline code badges for paths and binaries
+  const formatStepContent = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(`[^`]+`|[A-Za-z]:\\[\w\\.-]+|%[\w]+%|\b[\w-]+\.(?:exe|dll|sys|bat|ps1|sh|json|log|bin)\b)/g);
+    return parts.map((part, i) => {
+      if (!part) return null;
+      if (
+        (part.startsWith('`') && part.endsWith('`')) ||
+        /^[A-Za-z]:\\/.test(part) ||
+        /^%[\w]+%$/.test(part) ||
+        /\.(?:exe|dll|sys|bat|ps1|sh|json|log|bin)$/i.test(part)
+      ) {
+        const clean = part.replace(/^`|`$/g, '');
+        return <code key={i} className="forensic-inline-code">{clean}</code>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+  // Render markdown text with sleek typography
   const renderMarkdown = (text) => {
     if (!text) return null;
     return text.split('\n').map((line, idx) => {
@@ -120,13 +138,15 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
           <h4
             key={idx}
             style={{
-              fontFamily: 'var(--font-heading)',
+              fontFamily: 'var(--font-tech)',
               color: '#00f2fe',
-              fontSize: '0.95rem',
+              fontSize: '1.05rem',
+              fontWeight: 700,
               letterSpacing: '0.06em',
-              margin: '16px 0 6px 0',
+              margin: '18px 0 8px 0',
               borderBottom: '1px solid rgba(0, 242, 255, 0.2)',
               paddingBottom: 4,
+              textTransform: 'uppercase',
             }}
           >
             {trimmed.replace('### ', '')}
@@ -138,13 +158,15 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
           <h3
             key={idx}
             style={{
-              fontFamily: 'var(--font-heading)',
-              color: '#fff',
-              fontSize: '1.08rem',
-              letterSpacing: '0.08em',
-              margin: '20px 0 8px 0',
+              fontFamily: 'var(--font-tech)',
+              color: '#ffffff',
+              fontSize: '1.18rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              margin: '22px 0 10px 0',
               borderBottom: '1px solid rgba(0, 242, 255, 0.35)',
-              paddingBottom: 5,
+              paddingBottom: 6,
+              textTransform: 'uppercase',
             }}
           >
             {trimmed.replace('## ', '')}
@@ -156,11 +178,13 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
           <h2
             key={idx}
             style={{
-              fontFamily: 'var(--font-heading)',
+              fontFamily: 'var(--font-tech)',
               color: '#00f2fe',
-              fontSize: '1.2rem',
-              letterSpacing: '0.1em',
-              margin: '22px 0 10px 0',
+              fontSize: '1.32rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              margin: '24px 0 12px 0',
+              textTransform: 'uppercase',
             }}
           >
             {trimmed.replace('# ', '')}
@@ -174,16 +198,16 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
             style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: 8,
-              margin: '4px 0',
-              fontSize: '0.78rem',
-              color: '#cbd5e1',
-              fontFamily: 'var(--font-mono)',
-              lineHeight: 1.5,
+              gap: 10,
+              margin: '6px 0',
+              fontSize: '0.84rem',
+              color: '#e2e8f0',
+              fontFamily: 'var(--font-sans)',
+              lineHeight: 1.6,
             }}
           >
-            <span style={{ color: '#00f2fe', minWidth: 10 }}>&bull;</span>
-            <span>{trimmed.substring(2)}</span>
+            <span style={{ color: '#00f2fe', fontWeight: 700, minWidth: 10 }}>&bull;</span>
+            <span>{formatStepContent(trimmed.substring(2))}</span>
           </div>
         );
       }
@@ -196,34 +220,37 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
             style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: 8,
-              margin: '4px 0',
-              fontSize: '0.78rem',
+              gap: 10,
+              margin: '6px 0',
+              fontSize: '0.84rem',
               color: '#e2e8f0',
-              fontFamily: 'var(--font-mono)',
-              lineHeight: 1.5,
+              fontFamily: 'var(--font-sans)',
+              lineHeight: 1.6,
             }}
           >
-            <span style={{ color: '#ffbb00', fontWeight: 700, minWidth: 20 }}>{num}</span>
-            <span>{content}</span>
+            <span style={{ color: '#00ff88', fontWeight: 700, minWidth: 22, fontFamily: 'var(--font-tech)', fontSize: '0.92rem' }}>
+              {num}
+            </span>
+            <span>{formatStepContent(content)}</span>
           </div>
         );
       }
       if (!trimmed) {
-        return <div key={idx} style={{ height: 6 }} />;
+        return <div key={idx} style={{ height: 8 }} />;
       }
       return (
         <p
           key={idx}
           style={{
-            margin: '4px 0',
-            fontSize: '0.78rem',
-            color: '#94a3b8',
-            fontFamily: 'var(--font-mono)',
-            lineHeight: 1.6,
+            margin: '6px 0',
+            fontSize: '0.85rem',
+            color: '#cbd5e1',
+            fontFamily: 'var(--font-sans)',
+            lineHeight: 1.65,
+            letterSpacing: '0.01em',
           }}
         >
-          {trimmed}
+          {formatStepContent(trimmed)}
         </p>
       );
     });
@@ -233,41 +260,18 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
 
   return (
     <div
+      className="forensic-disassembly-card"
       onClick={(e) => e.stopPropagation()}
       style={{
-        marginTop: 10,
-        background: 'rgba(2, 6, 18, 0.98)',
         border: `1px solid ${sevColor}55`,
-        boxShadow: `0 8px 32px rgba(0,0,0,0.8), inset 0 0 16px ${sevColor}15`,
-        borderRadius: 4,
-        overflow: 'hidden',
-        animation: 'fadeIn 0.25s ease',
+        boxShadow: `0 12px 36px rgba(0,0,0,0.85), inset 0 0 18px ${sevColor}15`,
       }}
     >
       {/* ── Top Navigation Bar ────────────────────────────────────────────── */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 10,
-          padding: '10px 16px',
-          background: 'rgba(4, 11, 28, 0.95)',
-          borderBottom: '1px solid rgba(0, 242, 255, 0.18)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="forensic-top-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span className="pulse-dot" style={{ background: sevColor }} />
-          <span
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '0.82rem',
-              letterSpacing: '0.1em',
-              color: '#fff',
-              fontWeight: 700,
-            }}
-          >
+          <span className="forensic-tag-id">
             [ 0xDISASSEMBLY // EVENT_ID: {exp.event_id} ]
           </span>
           <span
@@ -275,11 +279,13 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
               background: `${sevColor}22`,
               border: `1px solid ${sevColor}66`,
               color: sevColor,
-              padding: '1px 6px',
-              borderRadius: 2,
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.62rem',
+              padding: '2px 8px',
+              borderRadius: 3,
+              fontFamily: 'var(--font-tech)',
+              fontSize: '0.72rem',
               fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
             }}
           >
             {exp.severity}
@@ -287,26 +293,13 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
         </div>
 
         {/* Tab Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <button
             onClick={() => {
               playCyberClick();
               setActiveTab('analysis');
             }}
-            style={{
-              background: activeTab === 'analysis' ? 'rgba(0, 242, 255, 0.2)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${activeTab === 'analysis' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}`,
-              color: activeTab === 'analysis' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-              padding: '4px 10px',
-              borderRadius: 2,
-              fontFamily: 'var(--font-heading)',
-              fontSize: '0.74rem',
-              letterSpacing: '0.06em',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-            }}
+            className={`forensic-tab-btn ${activeTab === 'analysis' ? 'active' : ''}`}
           >
             <span>🔍 FORENSIC ANALYSIS</span>
           </button>
@@ -320,31 +313,11 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
                 setActiveTab('ai');
               }
             }}
-            style={{
-              background:
-                activeTab === 'ai'
-                  ? 'rgba(168, 85, 247, 0.25)'
-                  : exp.ai_explanation
-                  ? 'rgba(168, 85, 247, 0.1)'
-                  : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${
-                activeTab === 'ai' ? 'var(--accent-purple)' : exp.ai_explanation ? '#a855f766' : 'rgba(255,255,255,0.1)'
-              }`,
-              color: activeTab === 'ai' || exp.ai_explanation ? '#c084fc' : 'var(--text-secondary)',
-              padding: '4px 10px',
-              borderRadius: 2,
-              fontFamily: 'var(--font-heading)',
-              fontSize: '0.74rem',
-              letterSpacing: '0.06em',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-            }}
+            className={`forensic-tab-btn ai-tab ${activeTab === 'ai' ? 'active' : ''}`}
           >
             <span>⚡ AI NEURAL COPILOT</span>
             {exp.ai_explanation && (
-              <span style={{ fontSize: '0.58rem', background: '#a855f7', color: '#fff', padding: '0 4px', borderRadius: 2 }}>
+              <span style={{ fontSize: '0.62rem', background: '#a855f7', color: '#fff', padding: '1px 5px', borderRadius: 2, fontWeight: 700 }}>
                 READY
               </span>
             )}
@@ -355,17 +328,7 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
               playCyberClick();
               setActiveTab('raw');
             }}
-            style={{
-              background: activeTab === 'raw' ? 'rgba(0, 242, 255, 0.2)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${activeTab === 'raw' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}`,
-              color: activeTab === 'raw' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-              padding: '4px 10px',
-              borderRadius: 2,
-              fontFamily: 'var(--font-heading)',
-              fontSize: '0.74rem',
-              letterSpacing: '0.06em',
-              cursor: 'pointer',
-            }}
+            className={`forensic-tab-btn ${activeTab === 'raw' ? 'active' : ''}`}
           >
             <span>📄 RAW BUFFER</span>
           </button>
@@ -373,7 +336,7 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
           <button
             onClick={(e) => copyLog(event.raw_log || JSON.stringify(event, null, 2), globalIndex)}
             className={`cyber-copy-btn ${copiedId === globalIndex ? 'copied' : ''}`}
-            style={{ padding: '4px 10px', fontSize: '0.7rem' }}
+            style={{ padding: '5px 12px', fontSize: '0.75rem', fontFamily: 'var(--font-tech)', fontWeight: 700, letterSpacing: '0.06em' }}
           >
             {copiedId === globalIndex ? '✓ COPIED' : '📋 COPY RAW'}
           </button>
@@ -381,142 +344,57 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
       </div>
 
       {/* ── Content View ─────────────────────────────────────────────────── */}
-      <div style={{ padding: '16px 18px' }}>
+      <div style={{ padding: '18px 20px' }}>
         {/* TAB 1: FORENSIC ANALYSIS */}
         {activeTab === 'analysis' && (
           <div>
             {/* Event Name & Headline Banner */}
-            <div
-              style={{
-                background: 'rgba(0, 242, 255, 0.04)',
-                border: '1px solid rgba(0, 242, 255, 0.15)',
-                borderRadius: 3,
-                padding: '12px 16px',
-                marginBottom: 14,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '1.05rem',
-                  letterSpacing: '0.06em',
-                  color: '#fff',
-                  fontWeight: 700,
-                  marginBottom: 6,
-                }}
-              >
+            <div className="forensic-headline-banner">
+              <div className="forensic-headline-title">
                 {exp.event_name}
               </div>
 
               {/* Forensic Badges Ribbon */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                <span
-                  style={{
-                    background: 'rgba(0, 242, 255, 0.1)',
-                    border: '1px solid rgba(0, 242, 255, 0.3)',
-                    color: '#00f2fe',
-                    padding: '2px 8px',
-                    borderRadius: 2,
-                    fontSize: '0.68rem',
-                    fontFamily: 'var(--font-mono)',
-                  }}
-                >
-                  EVENT ID: {exp.event_id}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span className="forensic-badge-tag">
+                  <span className="badge-label" style={{ color: 'var(--accent-cyan)' }}>EVENT ID:</span>
+                  <span className="badge-val">{exp.event_id}</span>
                 </span>
 
-                <span
-                  style={{
-                    background: 'rgba(168, 85, 247, 0.1)',
-                    border: '1px solid rgba(168, 85, 247, 0.3)',
-                    color: '#c084fc',
-                    padding: '2px 8px',
-                    borderRadius: 2,
-                    fontSize: '0.68rem',
-                    fontFamily: 'var(--font-mono)',
-                  }}
-                >
-                  SUBSYSTEM: {exp.subsystem}
+                <span className="forensic-badge-tag">
+                  <span className="badge-label" style={{ color: '#c084fc' }}>SUBSYSTEM:</span>
+                  <span className="badge-val" style={{ color: '#e9d5ff' }}>{exp.subsystem}</span>
                 </span>
 
-                <span
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: '#e2e8f0',
-                    padding: '2px 8px',
-                    borderRadius: 2,
-                    fontSize: '0.68rem',
-                    fontFamily: 'var(--font-mono)',
-                  }}
-                >
-                  USER: {exp.user}
+                <span className="forensic-badge-tag">
+                  <span className="badge-label" style={{ color: '#94a3b8' }}>USER:</span>
+                  <span className="badge-val">{exp.user}</span>
                 </span>
 
                 {exp.process && exp.process !== 'N/A' && (
-                  <span
-                    style={{
-                      background: 'rgba(0, 255, 136, 0.08)',
-                      border: '1px solid rgba(0, 255, 136, 0.3)',
-                      color: '#00ff88',
-                      padding: '2px 8px',
-                      borderRadius: 2,
-                      fontSize: '0.68rem',
-                      fontFamily: 'var(--font-mono)',
-                    }}
-                  >
-                    PROC: {exp.process}
+                  <span className="forensic-badge-tag">
+                    <span className="badge-label" style={{ color: '#00ff88' }}>PROC:</span>
+                    <span className="badge-val" style={{ color: '#00ff88' }}>{exp.process}</span>
                   </span>
                 )}
 
                 {exp.ip_address && exp.ip_address !== 'N/A' && (
-                  <span
-                    style={{
-                      background: 'rgba(0, 242, 255, 0.08)',
-                      border: '1px solid rgba(0, 242, 255, 0.3)',
-                      color: '#00f2fe',
-                      padding: '2px 8px',
-                      borderRadius: 2,
-                      fontSize: '0.68rem',
-                      fontFamily: 'var(--font-mono)',
-                    }}
-                  >
-                    IP: {exp.ip_address}
+                  <span className="forensic-badge-tag">
+                    <span className="badge-label" style={{ color: 'var(--accent-cyan)' }}>IP:</span>
+                    <span className="badge-val" style={{ color: 'var(--accent-cyan)' }}>{exp.ip_address}</span>
                   </span>
                 )}
               </div>
             </div>
 
             {/* Plain English Summary Box */}
-            <div
-              style={{
-                background: 'rgba(255, 187, 0, 0.06)',
-                borderLeft: '3px solid #ffbb00',
-                padding: '10px 14px',
-                marginBottom: 16,
-                borderRadius: '0 3px 3px 0',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '0.66rem',
-                  fontFamily: 'var(--font-heading)',
-                  letterSpacing: '0.1em',
-                  color: '#ffbb00',
-                  fontWeight: 700,
-                  marginBottom: 3,
-                }}
-              >
-                [ WHAT HAPPENED // PLAIN-ENGLISH SUMMARY ]
+            <div className="forensic-summary-box">
+              <div className="forensic-summary-tag">
+                <span>⚡</span>
+                <span>[ WHAT HAPPENED // PLAIN-ENGLISH SUMMARY ]</span>
               </div>
-              <div
-                style={{
-                  fontSize: '0.82rem',
-                  color: '#f8fafc',
-                  fontFamily: 'var(--font-mono)',
-                  lineHeight: 1.5,
-                }}
-              >
-                {exp.summary}
+              <div className="forensic-summary-prose">
+                {formatStepContent(exp.summary)}
               </div>
             </div>
 
@@ -524,118 +402,58 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: 14,
-                marginBottom: 16,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+                gap: 16,
+                marginBottom: 18,
               }}
             >
               {/* Left Column: Subsystem Mechanics & Threat Analysis */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {/* OS Mechanics */}
-                <div
-                  style={{
-                    background: 'rgba(5, 12, 32, 0.8)',
-                    border: '1px solid rgba(0, 242, 255, 0.15)',
-                    padding: '12px 14px',
-                    borderRadius: 3,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      color: '#00f2fe',
-                      fontSize: '0.78rem',
-                      letterSpacing: '0.08em',
-                      fontWeight: 700,
-                      marginBottom: 6,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
+                <div className="forensic-panel">
+                  <div className="forensic-section-header" style={{ color: '#00f2fe' }}>
                     <span>⚙️</span>
                     <span>SUBSYSTEM & OS KERNEL MECHANICS</span>
                   </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.74rem',
-                      color: '#94a3b8',
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    {exp.technical_mechanics}
+                  <div className="forensic-prose">
+                    {formatStepContent(exp.technical_mechanics)}
                   </div>
                 </div>
 
                 {/* Threat & Weaponization Perspective */}
-                <div
-                  style={{
-                    background: 'rgba(5, 12, 32, 0.8)',
-                    border: '1px solid rgba(255, 94, 0, 0.25)',
-                    padding: '12px 14px',
-                    borderRadius: 3,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      color: '#ff5e00',
-                      fontSize: '0.78rem',
-                      letterSpacing: '0.08em',
-                      fontWeight: 700,
-                      marginBottom: 6,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
+                <div className="forensic-panel forensic-panel-threat">
+                  <div className="forensic-section-header" style={{ color: '#ff5e00' }}>
                     <span>🛡️</span>
                     <span>THREAT & ADVERSARY WEAPONIZATION PERSPECTIVE</span>
                   </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.74rem',
-                      color: '#cbd5e1',
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    {exp.threat_perspective}
+                  <div className="forensic-prose">
+                    {formatStepContent(exp.threat_perspective)}
                   </div>
                 </div>
 
                 {/* MITRE ATT&CK Mapping */}
                 {exp.mitre_details && exp.mitre_details.technique !== 'N/A' && (
                   <div
+                    className="forensic-panel"
                     style={{
-                      background: 'rgba(168, 85, 247, 0.06)',
-                      border: '1px solid rgba(168, 85, 247, 0.25)',
-                      padding: '10px 14px',
-                      borderRadius: 3,
+                      background: 'rgba(168, 85, 247, 0.08)',
+                      borderColor: 'rgba(168, 85, 247, 0.3)',
                     }}
                   >
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        color: '#c084fc',
-                        fontSize: '0.74rem',
-                        letterSpacing: '0.08em',
-                        fontWeight: 700,
-                        marginBottom: 6,
-                      }}
-                    >
-                      MITRE ATT&CK MAPPING
+                    <div className="forensic-section-header" style={{ color: '#c084fc' }}>
+                      <span>🎯</span>
+                      <span>MITRE ATT&CK MAPPING</span>
                     </div>
-                    <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                       <span
                         style={{
-                          background: 'rgba(168, 85, 247, 0.2)',
-                          color: '#e9d5ff',
-                          padding: '2px 6px',
-                          borderRadius: 2,
+                          background: 'rgba(168, 85, 247, 0.22)',
+                          border: '1px solid rgba(168, 85, 247, 0.45)',
+                          color: '#f3e8ff',
+                          padding: '3px 8px',
+                          borderRadius: 3,
                           fontFamily: 'var(--font-mono)',
-                          fontSize: '0.66rem',
+                          fontSize: '0.72rem',
                           fontWeight: 700,
                         }}
                       >
@@ -643,12 +461,16 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
                       </span>
                       <span
                         style={{
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          color: '#94a3b8',
-                          padding: '2px 6px',
-                          borderRadius: 2,
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.66rem',
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          border: '1px solid rgba(255, 255, 255, 0.14)',
+                          color: '#cbd5e1',
+                          padding: '3px 8px',
+                          borderRadius: 3,
+                          fontFamily: 'var(--font-tech)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
                         }}
                       >
                         TACTIC: {exp.mitre_details.tactic}
@@ -656,9 +478,10 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
                     </div>
                     <div
                       style={{
-                        fontSize: '0.72rem',
-                        fontFamily: 'var(--font-mono)',
-                        color: '#a855f7',
+                        fontSize: '0.82rem',
+                        fontFamily: 'var(--font-sans)',
+                        color: '#d8b4fe',
+                        lineHeight: 1.55,
                       }}
                     >
                       {exp.mitre_details.description}
@@ -668,125 +491,45 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
               </div>
 
               {/* Right Column: SOC Playbook & Artifacts */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {/* SOC Checklist */}
-                <div
-                  style={{
-                    background: 'rgba(5, 12, 32, 0.8)',
-                    border: '1px solid rgba(0, 255, 136, 0.2)',
-                    padding: '12px 14px',
-                    borderRadius: 3,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      color: '#00ff88',
-                      fontSize: '0.78rem',
-                      letterSpacing: '0.08em',
-                      fontWeight: 700,
-                      marginBottom: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
+                <div className="forensic-panel forensic-panel-playbook">
+                  <div className="forensic-section-header" style={{ color: '#00ff88' }}>
                     <span>📋</span>
                     <span>FORENSIC INVESTIGATION PLAYBOOK (SOC ACTIONS)</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {(exp.investigation_steps || []).map((step, sIdx) => (
-                      <div
-                        key={sIdx}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 8,
-                          fontSize: '0.74rem',
-                          fontFamily: 'var(--font-mono)',
-                          color: '#e2e8f0',
-                          lineHeight: 1.45,
-                        }}
-                      >
-                        <span
-                          style={{
-                            color: '#00ff88',
-                            fontWeight: 700,
-                            minWidth: 16,
-                            textAlign: 'right',
-                          }}
-                        >
+                      <div key={sIdx} className="forensic-playbook-item">
+                        <span className="forensic-step-num">
                           {sIdx + 1}.
                         </span>
-                        <span>{step}</span>
+                        <span className="forensic-step-text">
+                          {formatStepContent(step)}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Key Artifacts to Check */}
-                <div
-                  style={{
-                    background: 'rgba(5, 12, 32, 0.8)',
-                    border: '1px solid rgba(0, 242, 255, 0.15)',
-                    padding: '12px 14px',
-                    borderRadius: 3,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      color: '#00f2fe',
-                      fontSize: '0.78rem',
-                      letterSpacing: '0.08em',
-                      fontWeight: 700,
-                      marginBottom: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
+                <div className="forensic-panel">
+                  <div className="forensic-section-header" style={{ color: '#00f2fe' }}>
                     <span>📁</span>
                     <span>KEY FORENSIC ARTIFACTS & PATHS TO CORRELATE</span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {(exp.artifacts_to_check || []).map((art, aIdx) => (
                       <div
                         key={aIdx}
+                        className="forensic-artifact-row"
                         onClick={(e) => handleCopyArtifact(e, art)}
-                        style={{
-                          background: 'rgba(0, 242, 255, 0.05)',
-                          border: '1px solid rgba(0, 242, 255, 0.18)',
-                          padding: '6px 10px',
-                          borderRadius: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 8,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                        title="Click to copy path"
+                        title="Click to copy path to clipboard"
                       >
-                        <span
-                          style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.7rem',
-                            color: '#cbd5e1',
-                            wordBreak: 'break-all',
-                          }}
-                        >
+                        <span className="forensic-artifact-path">
                           {art}
                         </span>
-                        <span
-                          style={{
-                            fontSize: '0.62rem',
-                            fontFamily: 'var(--font-mono)',
-                            color: copiedArtifact === art ? '#00ff88' : '#00f2fe',
-                            minWidth: 50,
-                            textAlign: 'right',
-                          }}
-                        >
+                        <span className="forensic-artifact-copy" style={{ color: copiedArtifact === art ? '#00ff88' : '#00f2fe' }}>
                           {copiedArtifact === art ? '✓ COPIED' : 'COPY'}
                         </span>
                       </div>
@@ -797,37 +540,27 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
             </div>
 
             {/* Launch AI Deep Dive Prompt Banner */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 12,
-                padding: '12px 16px',
-                background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.15), rgba(0, 242, 255, 0.1))',
-                border: '1px solid rgba(168, 85, 247, 0.35)',
-                borderRadius: 3,
-              }}
-            >
+            <div className="forensic-ai-banner-box">
               <div>
                 <div
                   style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: '0.88rem',
+                    fontFamily: 'var(--font-tech)',
+                    fontSize: '1.05rem',
                     letterSpacing: '0.06em',
-                    color: '#fff',
+                    color: '#ffffff',
                     fontWeight: 700,
+                    textTransform: 'uppercase',
                   }}
                 >
                   ⚡ NEED DEEPER AUTONOMOUS INVESTIGATION?
                 </div>
                 <div
                   style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.72rem',
-                    color: '#c084fc',
-                    marginTop: 2,
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '0.84rem',
+                    color: '#e2e8f0',
+                    marginTop: 3,
+                    lineHeight: 1.5,
                   }}
                 >
                   Generate a complete AI incident report with Google Gemini 3.5 Flash for root-cause and adversary tradecraft.
@@ -836,22 +569,9 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
 
               <button
                 onClick={handleRunAiAnalysis}
-                style={{
-                  background: 'linear-gradient(135deg, #a855f7, #6366f1)',
-                  border: 'none',
-                  color: '#fff',
-                  padding: '8px 16px',
-                  borderRadius: 2,
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '0.78rem',
-                  letterSpacing: '0.08em',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 0 15px rgba(168, 85, 247, 0.4)',
-                  transition: 'transform 0.15s ease',
-                }}
+                className="forensic-ai-btn"
               >
-                {exp.ai_explanation ? 'VIEW GEMINI REPORT ▶' : '⚡ RUN GEMINI AI INVESTIGATION'}
+                <span>{exp.ai_explanation ? 'VIEW GEMINI REPORT ▶' : '⚡ RUN GEMINI AI INVESTIGATION'}</span>
               </button>
             </div>
           </div>
@@ -863,29 +583,32 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
             {aiLoading && (
               <div
                 style={{
-                  padding: '40px 20px',
+                  padding: '44px 20px',
                   textAlign: 'center',
                   background: 'rgba(5, 12, 32, 0.6)',
-                  borderRadius: 3,
+                  borderRadius: 4,
+                  border: '1px solid rgba(168, 85, 247, 0.25)',
                 }}
               >
                 <div className="spinner" style={{ margin: '0 auto 16px' }} />
                 <div
                   style={{
-                    fontFamily: 'var(--font-heading)',
+                    fontFamily: 'var(--font-tech)',
                     color: '#c084fc',
-                    letterSpacing: '0.12em',
-                    fontSize: '0.95rem',
+                    letterSpacing: '0.08em',
+                    fontSize: '1.15rem',
+                    fontWeight: 700,
                   }}
                 >
                   QUERYING GEMINI NEURAL REASONING CORE...
                 </div>
                 <div
                   style={{
-                    fontFamily: 'var(--font-mono)',
-                    color: '#64748b',
-                    fontSize: '0.72rem',
-                    marginTop: 6,
+                    fontFamily: 'var(--font-sans)',
+                    color: '#94a3b8',
+                    fontSize: '0.84rem',
+                    marginTop: 8,
+                    lineHeight: 1.5,
                   }}
                 >
                   Analyzing telemetry buffer, cross-referencing MITRE ATT&CK vectors and adversary tradecraft...
@@ -902,25 +625,26 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
                     justifyContent: 'space-between',
                     marginBottom: 14,
                     borderBottom: '1px solid rgba(168, 85, 247, 0.25)',
-                    paddingBottom: 8,
+                    paddingBottom: 10,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span
                       style={{
                         background: 'rgba(168, 85, 247, 0.2)',
                         border: '1px solid #a855f7',
-                        color: '#e9d5ff',
-                        padding: '2px 8px',
-                        borderRadius: 2,
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.66rem',
+                        color: '#f3e8ff',
+                        padding: '3px 10px',
+                        borderRadius: 3,
+                        fontFamily: 'var(--font-tech)',
+                        fontSize: '0.78rem',
                         fontWeight: 700,
+                        letterSpacing: '0.06em',
                       }}
                     >
                       AI ENGINE: GEMINI 3.5 FLASH
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: '0.76rem', color: '#94a3b8', fontFamily: 'var(--font-tech)', fontWeight: 600, letterSpacing: '0.04em' }}>
                       [ AUTONOMOUS DFIR REPORT ]
                     </span>
                   </div>
@@ -928,14 +652,17 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
                   <button
                     onClick={handleRunAiAnalysis}
                     style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#cbd5e1',
-                      padding: '3px 8px',
-                      borderRadius: 2,
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.66rem',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      color: '#f8fafc',
+                      padding: '4px 12px',
+                      borderRadius: 3,
+                      fontFamily: 'var(--font-tech)',
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
                       cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
                   >
                     ↻ RE-ANALYZE
@@ -946,8 +673,8 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
                   style={{
                     background: 'rgba(3, 8, 22, 0.95)',
                     border: '1px solid rgba(168, 85, 247, 0.25)',
-                    borderRadius: 3,
-                    padding: '16px 20px',
+                    borderRadius: 4,
+                    padding: '20px 24px',
                     maxHeight: '480px',
                     overflowY: 'auto',
                   }}
@@ -960,54 +687,44 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
             {!aiLoading && !exp.ai_explanation && (
               <div
                 style={{
-                  padding: '36px 24px',
+                  padding: '44px 24px',
                   textAlign: 'center',
                   background: 'rgba(5, 12, 32, 0.6)',
                   border: '1px dashed rgba(168, 85, 247, 0.35)',
-                  borderRadius: 3,
+                  borderRadius: 4,
                 }}
               >
-                <div style={{ fontSize: '2rem', marginBottom: 10 }}>🤖</div>
+                <div style={{ fontSize: '2.4rem', marginBottom: 12 }}>🤖</div>
                 <div
                   style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: '1.05rem',
-                    letterSpacing: '0.08em',
-                    color: '#fff',
-                    marginBottom: 6,
+                    fontFamily: 'var(--font-tech)',
+                    fontSize: '1.25rem',
+                    letterSpacing: '0.06em',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    marginBottom: 8,
                   }}
                 >
                   AUTONOMOUS GEMINI DFIR INVESTIGATION
                 </div>
                 <p
                   style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.75rem',
-                    color: '#94a3b8',
-                    maxWidth: 500,
-                    margin: '0 auto 18px',
-                    lineHeight: 1.5,
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '0.86rem',
+                    color: '#cbd5e1',
+                    maxWidth: 540,
+                    margin: '0 auto 20px',
+                    lineHeight: 1.6,
                   }}
                 >
                   Ask Google Gemini 3.5 Flash to generate a specialized incident response briefing, analyzing root-cause mechanics, potential evasions, and concrete triage steps.
                 </p>
                 <button
                   onClick={handleRunAiAnalysis}
-                  style={{
-                    background: 'linear-gradient(135deg, #a855f7, #6366f1)',
-                    border: 'none',
-                    color: '#fff',
-                    padding: '8px 20px',
-                    borderRadius: 2,
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: '0.82rem',
-                    letterSpacing: '0.08em',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: '0 0 18px rgba(168, 85, 247, 0.4)',
-                  }}
+                  className="forensic-ai-btn"
+                  style={{ margin: '0 auto' }}
                 >
-                  ⚡ INITIALIZE GEMINI AI INVESTIGATION
+                  <span>⚡ INITIALIZE GEMINI AI INVESTIGATION</span>
                 </button>
               </div>
             )}
@@ -1022,14 +739,16 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: 8,
+                marginBottom: 10,
               }}
             >
               <span
                 style={{
-                  fontSize: '0.68rem',
+                  fontSize: '0.76rem',
                   color: 'var(--accent-cyan)',
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-tech)',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
                 }}
               >
                 DECODED RAW TELEMETRY PAYLOAD
@@ -1037,6 +756,7 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
               <button
                 onClick={(e) => copyLog(event.raw_log || JSON.stringify(event, null, 2), globalIndex)}
                 className={`cyber-copy-btn ${copiedId === globalIndex ? 'copied' : ''}`}
+                style={{ fontFamily: 'var(--font-tech)', fontSize: '0.76rem', fontWeight: 700, letterSpacing: '0.06em' }}
               >
                 {copiedId === globalIndex ? '✓ BUFFER COPIED' : '📋 COPY RAW PAYLOAD'}
               </button>
@@ -1045,18 +765,18 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
             <pre
               style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.74rem',
-                color: '#94a3b8',
-                background: 'rgba(2, 4, 12, 0.9)',
+                fontSize: '0.78rem',
+                color: '#cbd5e1',
+                background: 'rgba(2, 4, 12, 0.95)',
                 border: '1px solid rgba(0, 242, 255, 0.2)',
-                borderRadius: 2,
-                padding: '12px 14px',
+                borderRadius: 3,
+                padding: '14px 16px',
                 overflowX: 'auto',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
-                margin: '0 0 14px 0',
-                lineHeight: 1.55,
-                maxHeight: 260,
+                margin: '0 0 16px 0',
+                lineHeight: 1.6,
+                maxHeight: 280,
               }}
             >
               {event.raw_log || JSON.stringify(event, null, 2)}
@@ -1067,17 +787,19 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
               style={{
                 background: 'rgba(4, 9, 24, 0.8)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: 2,
-                padding: '10px 14px',
+                borderRadius: 3,
+                padding: '12px 16px',
               }}
             >
               <div
                 style={{
-                  fontSize: '0.65rem',
-                  fontFamily: 'var(--font-heading)',
-                  color: '#64748b',
+                  fontSize: '0.72rem',
+                  fontFamily: 'var(--font-tech)',
+                  color: '#94a3b8',
                   letterSpacing: '0.08em',
-                  marginBottom: 6,
+                  fontWeight: 700,
+                  marginBottom: 8,
+                  textTransform: 'uppercase',
                 }}
               >
                 PARSED EVENT OBJECT SCHEMA
@@ -1085,10 +807,11 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
               <pre
                 style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.68rem',
-                  color: '#64748b',
+                  fontSize: '0.72rem',
+                  color: '#94a3b8',
                   margin: 0,
                   whiteSpace: 'pre-wrap',
+                  lineHeight: 1.5,
                 }}
               >
                 {JSON.stringify(event, null, 2)}
@@ -1100,4 +823,3 @@ export default function LogExplanationCard({ event, globalIndex, copiedId, copyL
     </div>
   );
 }
-
