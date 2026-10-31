@@ -11,7 +11,6 @@ import ReportExport from './components/ReportExport';
 import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
 import CyberBackground from './components/CyberBackground';
-import CyberDiagnosticsHUD from './components/CyberDiagnosticsHUD';
 import CyberTicker from './components/CyberTicker';
 import CyberGlitchText from './components/CyberGlitchText';
 import { isSoundEnabled, toggleSound, playCyberClick } from './cyberAudio';
@@ -426,9 +425,6 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
           </Routes>
         </main>
       </div>
-
-      {/* Floating Tactical Telemetry & Oscilloscope Deck */}
-      <CyberDiagnosticsHUD sessionId={sessionId} sessionInfo={sessionInfo} />
 
       {/* Live Threat Telemetry Ticker at the bottom edge */}
       <CyberTicker sessionInfo={sessionInfo} defconLevel={defconLevel} />
