@@ -11,13 +11,14 @@ import ReportExport from './components/ReportExport';
 import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
 import CyberBackground from './components/CyberBackground';
+import ForensicCopilot from './components/ForensicCopilot';
 import CyberTicker from './components/CyberTicker';
 import CyberGlitchText from './components/CyberGlitchText';
 import { isSoundEnabled, toggleSound, playCyberClick } from './cyberAudio';
 import './index.css';
 
 /* ── Professional SOC Topbar ─────────────────────────────────────────────── */
-function Topbar({ title, sessionId, sessionInfo, onNewSession }) {
+function Topbar({ title, sessionId, sessionInfo, onNewSession, copilotOpen, onToggleCopilot }) {
   const navigate = useNavigate();
   const [timeStr, setTimeStr] = useState('');
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
@@ -92,6 +93,29 @@ function Topbar({ title, sessionId, sessionInfo, onNewSession }) {
       </div>
 
       <div className="topbar-actions">
+        {/* Forensic AI Copilot Toggle */}
+        <button
+          className="btn btn-outline btn-sm"
+          onClick={() => { playCyberClick(); onToggleCopilot(); }}
+          title="Toggle AI Forensic Investigation Copilot"
+          style={{
+            borderColor: copilotOpen ? 'var(--accent-magenta)' : 'rgba(168,85,247,0.5)',
+            color: copilotOpen ? '#ffffff' : '#c084fc',
+            background: copilotOpen ? 'linear-gradient(135deg, rgba(168,85,247,0.3) 0%, rgba(99,102,241,0.3) 100%)' : 'rgba(168,85,247,0.1)',
+            boxShadow: copilotOpen ? '0 0 14px rgba(168,85,247,0.5)' : 'none',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.72rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <span>⚡ AI COPILOT</span>
+          <span style={{ fontSize: '0.55rem', padding: '1px 5px', borderRadius: '3px', background: 'rgba(0,242,254,0.2)', color: 'var(--accent-cyan)' }}>
+            {copilotOpen ? 'OPEN' : 'READY'}
+          </span>
+        </button>
+
         {/* Audio Synthesizer SFX Toggle */}
         <button 
           className="btn btn-outline btn-sm" 
@@ -128,7 +152,7 @@ function Topbar({ title, sessionId, sessionInfo, onNewSession }) {
 }
 
 /* ── Enterprise SOC Sidebar ──────────────────────────────────────────────── */
-function Sidebar({ sessionId, sessionInfo }) {
+function Sidebar({ sessionId, sessionInfo, copilotOpen, onToggleCopilot }) {
   const navigate = useNavigate();
 
   return (
@@ -194,6 +218,17 @@ function Sidebar({ sessionId, sessionInfo }) {
             <span className="nav-icon"><IconReport /></span>
             Forensic Report Export
           </NavLink>
+          <button
+            className={`nav-link copilot-nav-btn ${copilotOpen ? 'active' : ''}`}
+            onClick={() => { playCyberClick(); onToggleCopilot(); }}
+            style={{ width: '100%', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <span className="nav-icon" style={{ color: '#c084fc' }}>⚡</span>
+            <span>AI Evidence Copilot</span>
+            <span style={{ marginLeft: 'auto', background: 'rgba(168,85,247,0.2)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', fontSize: '0.55rem', padding: '1px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)' }}>
+              GEMINI
+            </span>
+          </button>
         </div>
 
         <div className="nav-section">
@@ -392,6 +427,7 @@ const PAGE_TITLES = {
 
 function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSession, loading, setLoading }) {
   const location = useLocation();
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const title = PAGE_TITLES[location.pathname] || 'Forensic Workspace';
   const showStats = sessionId && sessionInfo && !['/app/monitor', '/app', '/app/settings'].includes(location.pathname);
   const defconLevel = sessionId && sessionInfo?.risk_score >= 70 ? 'DEFCON 1' : 'DEFCON 5';
@@ -401,7 +437,12 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
       {/* Live Interactive Cyber Matrix Background */}
       <CyberBackground />
 
-      <Sidebar sessionId={sessionId} sessionInfo={sessionInfo} />
+      <Sidebar 
+        sessionId={sessionId} 
+        sessionInfo={sessionInfo} 
+        copilotOpen={copilotOpen} 
+        onToggleCopilot={() => setCopilotOpen((prev) => !prev)} 
+      />
       
       <div className="main-area" style={{ position: 'relative', zIndex: 1 }}>
         <Topbar 
@@ -409,6 +450,8 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
           sessionId={sessionId} 
           sessionInfo={sessionInfo}
           onNewSession={onNewSession} 
+          copilotOpen={copilotOpen}
+          onToggleCopilot={() => setCopilotOpen((prev) => !prev)}
         />
         <main className="page-content" style={{ position: 'relative', zIndex: 1 }}>
           {showStats && <SessionStats sessionInfo={sessionInfo} />}
@@ -425,6 +468,26 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
           </Routes>
         </main>
       </div>
+
+      {/* Floating Trigger in bottom-right corner when Copilot is closed */}
+      {!copilotOpen && (
+        <button
+          className="copilot-floating-trigger"
+          onClick={() => { playCyberClick(); setCopilotOpen(true); }}
+          title="Open AI Forensic Copilot Terminal"
+        >
+          <span className="pulse-beacon"></span>
+          <span>⚡ AI COPILOT</span>
+        </button>
+      )}
+
+      {/* Forensic Copilot Drawer */}
+      <ForensicCopilot
+        sessionId={sessionId}
+        sessionInfo={sessionInfo}
+        isOpen={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
+      />
 
       {/* Live Threat Telemetry Ticker at the bottom edge */}
       <CyberTicker sessionInfo={sessionInfo} defconLevel={defconLevel} />

@@ -80,4 +80,13 @@ export async function getMitreMatrix(sessionId) {
   return data;
 }
 
+export async function chatWithEvidence(sessionId, message, history = []) {
+  const { data } = await api.post('/chat-evidence', {
+    session_id: sessionId,
+    message,
+    history,
+  });
+  return data;
+}
+
 export default api;

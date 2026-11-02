@@ -7,7 +7,7 @@ import uuid
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -21,6 +21,7 @@ from services.detector import detect_suspicious_events, calculate_risk_score
 from services.analyzer import build_attack_chains, get_attack_narrative
 from services.graph import build_attack_graph
 from services.ai_explainer import generate_explanation, explain_single_event
+from services.copilot import chat_with_evidence
 from services.mitre import build_mitre_matrix
 from services.log_fetcher import get_real_log, list_available_sources, get_windows_log_channels
 from services.monitor import start_monitoring, stop_monitoring, get_monitor_stats
@@ -276,6 +277,66 @@ async def explain_event_endpoint(req: ExplainEventRequest):
         return explanation
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to explain log event: {str(e)}")
+
+
+class ChatEvidenceRequest(BaseModel):
+    session_id: str
+    message: str
+    history: Optional[List[Dict[str, str]]] = []
+
+
+@router.post("/chat-evidence")
+async def chat_evidence_endpoint(
+    req: ChatEvidenceRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Interactive Forensic AI Copilot endpoint.
+    Answers natural-language evidence queries grounded in active session telemetry.
+    """
+    session_id = req.session_id
+    events = []
+    session_info = {}
+
+    if session_id in session_cache:
+        events = session_cache[session_id].get("events", [])
+        session_info = {
+            "risk_score": session_cache[session_id].get("risk_score", 0),
+            "risk_level": session_cache[session_id].get("risk_level", "low"),
+            "chains": session_cache[session_id].get("chains", [])
+        }
+    else:
+        db_events = db.query(Event).filter(Event.session_id == session_id).order_by(Event.timestamp).all()
+        events = [_db_event_to_dict(e) for e in db_events]
+        analysis = db.query(AnalysisResult).filter(AnalysisResult.session_id == session_id).first()
+        if analysis:
+            session_info = {
+                "risk_score": analysis.risk_score,
+                "risk_level": analysis.risk_level
+            }
+
+    if not events and session_cache:
+        # Fallback to the latest active session in cache if ID wasn't provided or mismatch
+        fallback_sid = list(session_cache.keys())[-1]
+        events = session_cache[fallback_sid].get("events", [])
+        session_info = {
+            "risk_score": session_cache[fallback_sid].get("risk_score", 0),
+            "risk_level": session_cache[fallback_sid].get("risk_level", "low"),
+            "chains": session_cache[fallback_sid].get("chains", [])
+        }
+
+    try:
+        result = await run_in_threadpool(
+            chat_with_evidence,
+            session_id,
+            req.message,
+            req.history,
+            events,
+            session_info
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Copilot query failed: {str(e)}")
 
 
 @router.get("/events")

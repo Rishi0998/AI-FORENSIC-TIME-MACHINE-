@@ -16,6 +16,7 @@ Upload system/network logs → get automated threat detection, interactive attac
 | **Attack Graph** | Cytoscape.js DAG visualization mapping users → IPs → processes with node inspection |
 | **Forensic Replay** | Step-by-step chronological threat playback with speed controls (0.5x–4x) |
 | **AI Analysis** | Risk scoring, attack kill chain mapping, MITRE ATT&CK tagging, executive summary |
+| **Forensic AI Copilot** | Conversational SOC investigator grounded in session telemetry for interactive triage, IOC extraction & remediation scripting |
 | **PDF Export** | Multi-page dark-themed forensic report with cover page, threat table, and remediation |
 | **Settings** | AI engine configuration, API key management, model priority selection |
 
@@ -57,6 +58,7 @@ ai-forensics-time-machine/
 │   │   ├── parser.py            # Multi-format log parser (Linux, Windows, network)
 │   │   ├── detector.py          # Threat detection engine (20+ rules)
 │   │   ├── analyzer.py          # Attack chain builder + narrative generator
+│   │   ├── copilot.py           # Conversational AI SOC copilot & evidence RAG engine
 │   │   ├── graph.py             # NetworkX attack graph construction
 │   │   ├── ai_explainer.py      # Gemini AI integration + fallback engine
 │   │   ├── log_fetcher.py       # Live system log and channel management
@@ -78,6 +80,7 @@ ai-forensics-time-machine/
 │           ├── Graph.jsx        # Cytoscape.js attack graph
 │           ├── Replay.jsx       # Step-by-step threat playback
 │           ├── Analysis.jsx     # Risk score + kill chain + AI report
+│           ├── ForensicCopilot.jsx # Interactive AI SOC evidence copilot drawer
 │           ├── ReportExport.jsx # PDF generation + remediation
 │           └── Settings.jsx     # AI config + system info
 │
@@ -138,6 +141,7 @@ Navigate to **http://localhost:5173** in your browser.
 | `GET` | `/api/timeline` | Get timeline data with severity breakdown |
 | `GET` | `/api/graph` | Get attack graph (nodes + edges) |
 | `GET` | `/api/analysis` | Get AI analysis, risk score, kill chain |
+| `POST` | `/api/chat-evidence` | Interactive conversational SOC copilot grounded in session telemetry |
 | `GET` | `/api/replay` | Get ordered suspicious events for replay |
 | `GET` | `/api/log-sources` | List available log sources |
 | `WS` | `/api/ws/monitor` | WebSocket for real-time log streaming |
