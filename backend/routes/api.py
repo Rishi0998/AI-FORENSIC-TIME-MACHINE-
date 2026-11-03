@@ -315,15 +315,28 @@ async def chat_evidence_endpoint(
                 "risk_level": analysis.risk_level
             }
 
-    if not events and session_cache:
-        # Fallback to the latest active session in cache if ID wasn't provided or mismatch
-        fallback_sid = list(session_cache.keys())[-1]
-        events = session_cache[fallback_sid].get("events", [])
-        session_info = {
-            "risk_score": session_cache[fallback_sid].get("risk_score", 0),
-            "risk_level": session_cache[fallback_sid].get("risk_level", "low"),
-            "chains": session_cache[fallback_sid].get("chains", [])
-        }
+    if not events:
+        if session_cache:
+            fallback_sid = list(session_cache.keys())[-1]
+            events = session_cache[fallback_sid].get("events", [])
+            session_info = {
+                "session_id": fallback_sid,
+                "risk_score": session_cache[fallback_sid].get("risk_score", 0),
+                "risk_level": session_cache[fallback_sid].get("risk_level", "low"),
+                "chains": session_cache[fallback_sid].get("chains", [])
+            }
+        else:
+            latest_event = db.query(Event).order_by(Event.id.desc()).first()
+            if latest_event and latest_event.session_id:
+                fallback_sid = latest_event.session_id
+                db_events = db.query(Event).filter(Event.session_id == fallback_sid).order_by(Event.timestamp).limit(200).all()
+                events = [_db_event_to_dict(e) for e in db_events]
+                analysis = db.query(AnalysisResult).filter(AnalysisResult.session_id == fallback_sid).first()
+                session_info = {
+                    "session_id": fallback_sid,
+                    "risk_score": analysis.risk_score if analysis else 0,
+                    "risk_level": analysis.risk_level if analysis else "low"
+                }
 
     try:
         result = await run_in_threadpool(
@@ -337,6 +350,31 @@ async def chat_evidence_endpoint(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Copilot query failed: {str(e)}")
+
+
+@router.get("/latest-session")
+async def get_latest_session_endpoint(db: Session = Depends(get_db)):
+    """Retrieve the latest session information from cache or database."""
+    if session_cache:
+        sid = list(session_cache.keys())[-1]
+        return {
+            "session_id": sid,
+            "total_events": len(session_cache[sid].get("events", [])),
+            "risk_score": session_cache[sid].get("risk_score", 0),
+            "risk_level": session_cache[sid].get("risk_level", "low")
+        }
+    latest_event = db.query(Event).order_by(Event.id.desc()).first()
+    if latest_event and latest_event.session_id:
+        sid = latest_event.session_id
+        count = db.query(Event).filter(Event.session_id == sid).count()
+        analysis = db.query(AnalysisResult).filter(AnalysisResult.session_id == sid).first()
+        return {
+            "session_id": sid,
+            "total_events": count,
+            "risk_score": analysis.risk_score if analysis else 0,
+            "risk_level": analysis.risk_level if analysis else "low"
+        }
+    return {"session_id": None}
 
 
 @router.get("/events")

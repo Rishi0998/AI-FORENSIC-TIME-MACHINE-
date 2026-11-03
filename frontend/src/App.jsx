@@ -496,20 +496,48 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
 }
 
 function AppContent() {
-  const [sessionId, setSessionId] = useState(null);
-  const [sessionInfo, setSessionInfo] = useState(null);
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem('chronos_session_id') || null);
+  const [sessionInfo, setSessionInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chronos_session_info');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!sessionId) {
+      // Auto-load latest session from backend if available
+      fetch('/api/latest-session')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.session_id) {
+            setSessionId(data.session_id);
+            setSessionInfo(data);
+            localStorage.setItem('chronos_session_id', data.session_id);
+            localStorage.setItem('chronos_session_info', JSON.stringify(data));
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   const handleAnalysisComplete = (result) => {
     setSessionId(result.session_id);
     setSessionInfo(result);
+    localStorage.setItem('chronos_session_id', result.session_id);
+    localStorage.setItem('chronos_session_info', JSON.stringify(result));
     navigate('/app/timeline');
   };
 
   const handleNewSession = () => {
     setSessionId(null);
     setSessionInfo(null);
+    localStorage.removeItem('chronos_session_id');
+    localStorage.removeItem('chronos_session_info');
     navigate('/app');
   };
 
