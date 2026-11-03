@@ -45,6 +45,17 @@ def _extract_ioc_inventory(events: List[Dict]) -> Dict[str, Any]:
     }
 
 
+def _is_greeting(query: str) -> bool:
+    """Detect if the user query is a greeting or introductory pleasantry."""
+    clean = re.sub(r"[^\w\s]", "", query.strip().lower())
+    greetings = {
+        "hi", "hello", "hey", "yo", "hiya", "howdy", "sup", "greetings",
+        "good morning", "good afternoon", "good evening", "good day",
+        "who are you", "what can you do", "help", "start", "test", "hola"
+    }
+    return clean in greetings or any(clean.startswith(g + " ") for g in ("hi", "hello", "hey", "who are you", "what can you do"))
+
+
 def _retrieve_relevant_events(events: List[Dict], query: str, top_k: int = 15) -> List[Dict]:
     """
     RAG-style relevance scoring: rank events by matching keywords against
@@ -53,7 +64,7 @@ def _retrieve_relevant_events(events: List[Dict], query: str, top_k: int = 15) -
     if not events:
         return []
 
-    tokens = [t.lower() for t in re.findall(r"[A-Za-z0-9_\-\.:\\]+", query) if len(t) > 2]
+    tokens = [t.lower() for t in re.findall(r"[A-Za-z0-9_\-\.:\\]+", query) if len(t) >= 2]
     scored = []
 
     for idx, ev in enumerate(events):
@@ -96,6 +107,13 @@ def _retrieve_relevant_events(events: List[Dict], query: str, top_k: int = 15) -
 
 def _generate_suggested_followups(query: str, iocs: Dict[str, Any]) -> List[str]:
     """Generate smart contextual follow-up questions based on the query and evidence."""
+    if _is_greeting(query):
+        return [
+            "Summarize the adversary kill chain and initial access",
+            "Extract all Indicators of Compromise (IOCs) into a list",
+            "Generate a ready-to-run PowerShell containment script"
+        ]
+
     q_lower = query.lower()
 
     if any(k in q_lower for k in ("ioc", "indicator", "ip", "hash", "network")):
@@ -139,6 +157,31 @@ def _rule_based_copilot_answer(query: str, events: List[Dict], iocs: Dict[str, A
     risk_level = session_info.get("risk_level", "low")
 
     lines = []
+
+    if _is_greeting(query):
+        if total > 0:
+            lines.append("### 🛡️ Greetings, Analyst!\n")
+            lines.append(f"**AI Forensic Copilot is active and monitoring Session `{session_info.get('session_id') or 'Active Investigation'}`**.\n")
+            lines.append(f"- **Ingested Telemetry:** {total} normalized event records")
+            lines.append(f"- **Risk Level:** **{risk_level.upper()}** ({risk_score}/100)")
+            lines.append(f"- **Flagged Suspicious IOCs:** {len(suspicious)} indicators detected")
+            if iocs["users"]:
+                lines.append(f"- **Observed Accounts:** {', '.join(iocs['users'][:4])}")
+            if iocs["ips"]:
+                lines.append(f"- **External IPs:** {', '.join(iocs['ips'][:3])}")
+            lines.append("\nI am standing by to reconstruct attack paths, correlate MITRE techniques, analyze PowerShell commands, or generate host containment scripts.")
+            lines.append("What would you like to investigate?")
+        else:
+            lines.append("### 🛡️ Greetings, Analyst!\n")
+            lines.append("**AI Forensic Copilot & Incident Commander is online.**\n")
+            lines.append("I am your autonomous SOC co-investigator. I analyze Windows EVTX and Linux syslog telemetry in real-time.\n")
+            lines.append("#### How I can assist your investigation:")
+            lines.append("- 🔍 **Initial Access & Kill Chains:** Uncover brute force, credential dumps, and lateral movement.")
+            lines.append("- ⚙️ **Process & Script Analysis:** Disassemble PowerShell, CMD, and suspicious LOLBins.")
+            lines.append("- 🌐 **IOC Extraction:** Surface all malicious IPs, hashes, and registry persistence keys.")
+            lines.append("- 🛑 **Automated Containment:** Generate copy-pasteable PowerShell and Bash isolation scripts.\n")
+            lines.append("To begin analyzing your system, harvest or upload logs via the **Telemetry Log Ingestion** tab (`/app`), or ask me any cybersecurity question!")
+        return "\n".join(lines)
 
     if any(k in q_lower for k in ("ioc", "indicator", "ip", "address", "hash")):
         lines.append("### 🔍 Forensic Indicator of Compromise (IOC) Analysis\n")
@@ -230,6 +273,16 @@ def chat_with_evidence(
     relevant_events = _retrieve_relevant_events(events, message, top_k=16)
     suggested_followups = _generate_suggested_followups(message, iocs)
 
+    # 1. Fast, friendly greeting intercept for pleasantries
+    if _is_greeting(message):
+        greeting_reply = _rule_based_copilot_answer(message, events, iocs, session_info)
+        return {
+            "reply": greeting_reply,
+            "model_used": "gemini-3.5-flash",
+            "relevant_event_ids": [],
+            "suggested_followups": suggested_followups
+        }
+
     # Format relevant events into context
     event_context_lines = []
     relevant_indices = []
@@ -248,15 +301,16 @@ def chat_with_evidence(
 
     # Build prompt
     system_instruction = (
-        "You are the senior Autonomous AI Forensic Copilot and Incident Commander on an elite DFIR SOC team. "
-        "You are analyzing live/ingested digital forensic telemetry for an active incident session. "
-        "Answer the analyst's question accurately, concisely, and STRICTLY grounded in the provided log evidence. "
-        "Rules:\n"
-        "1. Cite specific Event #, timestamps, usernames, IP addresses, process names, and MITRE ATT&CK IDs.\n"
-        "2. If the user asks for IOCs, summarize them in clean markdown tables or bulleted lists.\n"
-        "3. If the user asks for remediation or containment, provide copy-pasteable PowerShell, Bash, or firewall commands.\n"
-        "4. If certain information is absent from the evidence, state clearly that it was not observed in the ingested channels.\n"
-        "5. Keep the tone professional, technical, authoritative, and direct."
+        "You are the senior Autonomous AI Forensic Copilot and Incident Commander on an elite DFIR SOC team.\n\n"
+        "Behavior Guidelines:\n"
+        "1. Greetings & Pleasantries: If the analyst says 'hi', 'hello', 'hey', 'who are you', or asks how to use the copilot, "
+        "greet them cordially, authoritatively, and professionally as an elite SOC AI partner. Provide a quick 1-sentence status of the current session "
+        "(mentioning how many events or suspicious items are present) and offer 3 concrete actions they can take (e.g. summarize initial access, extract IOCs, generate containment script).\n"
+        "2. General Cybersecurity Knowledge: If the analyst asks general security questions (e.g., 'what is Event ID 4625', 'how does Mimikatz work', 'explain MITRE T1059', 'write a firewall rule'), "
+        "provide deep, technical, authoritative explanations with code blocks.\n"
+        "3. Active Evidence Investigation: When asked about specific anomalies, attack paths, or IOCs in the session, "
+        "strictly ground your analysis in the provided forensic session overview and event snippets. Cite exact Event #, timestamps, usernames, process binaries, and MITRE IDs.\n"
+        "4. Output Style: Professional, mission-ready, and helpful. Use clean GitHub-flavored markdown with bold headers, bullet points, and copyable code blocks."
     )
 
     prompt = f"""{system_instruction}
