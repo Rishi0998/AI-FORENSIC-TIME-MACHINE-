@@ -4,7 +4,7 @@ import { getMitreMatrix } from '../api';
 import { playCyberClick, playTargetLock, playThreatAlert, playWarpEffect } from '../cyberAudio';
 import CyberGlitchText from './CyberGlitchText';
 
-export default function MitreMatrix({ sessionId }) {
+export default function MitreMatrix({ sessionId, onOpenCopilot }) {
   const [matrixData, setMatrixData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedTechnique, setSelectedTechnique] = useState(null);
@@ -637,6 +637,23 @@ export default function MitreMatrix({ sessionId }) {
 
             {/* Quick Action Navigation Buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {onOpenCopilot && (
+                <button
+                  className="btn btn-sm btn-outline"
+                  style={{
+                    borderColor: 'rgba(0, 240, 255, 0.5)',
+                    color: '#00f0ff',
+                    background: 'rgba(0, 240, 255, 0.08)'
+                  }}
+                  onClick={() => {
+                    playTargetLock();
+                    onOpenCopilot(`Analyze MITRE ATT&CK technique ${selectedTechnique.id} (${selectedTechnique.name}) detected in this session. What events triggered it and what is the containment action?`);
+                  }}
+                  title="Ask AI Copilot to investigate this technique"
+                >
+                  <span>⚡ COPILOT INVESTIGATE</span>
+                </button>
+              )}
               <button
                 className="btn btn-sm btn-primary"
                 onClick={() => {
@@ -723,12 +740,30 @@ export default function MitreMatrix({ sessionId }) {
                 <span style={{ fontFamily: 'var(--font-heading)', color: '#c084fc', fontSize: '0.78rem', letterSpacing: '0.08em', fontWeight: 700 }}>
                   [ AUTO-SYNTHESIZED SIGMA DETECTION RULE // SIEM ASSET ]
                 </span>
-                <button
-                  onClick={() => handleCopySigma(selectedTechnique.sigma_rule)}
-                  className={`cyber-copy-btn ${copiedSigma ? 'copied' : ''}`}
-                >
-                  {copiedSigma ? '✓ SIGMA RULE COPIED' : '📋 COPY SIGMA YAML'}
-                </button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {onOpenCopilot && (
+                    <button
+                      onClick={() => {
+                        playTargetLock();
+                        onOpenCopilot(`Analyze detected MITRE technique ${selectedTechnique.id} (${selectedTechnique.name}) in this session. What events triggered it and what is the containment action?`);
+                      }}
+                      className="cyber-copy-btn"
+                      style={{
+                        borderColor: 'rgba(0, 240, 255, 0.4)',
+                        color: '#00f0ff',
+                        background: 'rgba(0, 240, 255, 0.08)'
+                      }}
+                    >
+                      ⚡ COPILOT TRIAGE
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleCopySigma(selectedTechnique.sigma_rule)}
+                    className={`cyber-copy-btn ${copiedSigma ? 'copied' : ''}`}
+                  >
+                    {copiedSigma ? '✓ SIGMA RULE COPIED' : '📋 COPY SIGMA YAML'}
+                  </button>
+                </div>
               </div>
 
               <pre

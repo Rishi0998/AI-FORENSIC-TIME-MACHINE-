@@ -10,7 +10,7 @@ const QUICK_STARTER_PROMPTS = [
   { label: '📋 CISO Executive Brief', prompt: 'Draft a concise CISO executive incident notification explaining the blast radius and urgency.' }
 ];
 
-export default function ForensicCopilot({ sessionId, sessionInfo, isOpen, onClose }) {
+export default function ForensicCopilot({ sessionId, sessionInfo, isOpen, onClose, initialPrompt, onClearInitialPrompt }) {
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -37,8 +37,12 @@ export default function ForensicCopilot({ sessionId, sessionInfo, isOpen, onClos
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 150);
+      if (initialPrompt && !isLoading) {
+        handleSendMessage(initialPrompt);
+        if (onClearInitialPrompt) onClearInitialPrompt();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialPrompt]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

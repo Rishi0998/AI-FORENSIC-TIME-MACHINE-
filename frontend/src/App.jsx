@@ -428,6 +428,12 @@ const PAGE_TITLES = {
 function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSession, loading, setLoading }) {
   const location = useLocation();
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotInitialPrompt, setCopilotInitialPrompt] = useState('');
+
+  const handleOpenCopilot = (prompt) => {
+    if (prompt) setCopilotInitialPrompt(prompt);
+    setCopilotOpen(true);
+  };
   const title = PAGE_TITLES[location.pathname] || 'Forensic Workspace';
   const showStats = sessionId && sessionInfo && !['/app/monitor', '/app', '/app/settings'].includes(location.pathname);
   const defconLevel = sessionId && sessionInfo?.risk_score >= 70 ? 'DEFCON 1' : 'DEFCON 5';
@@ -461,7 +467,7 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
             <Route path="/timeline" element={sessionId ? <Timeline sessionId={sessionId} /> : <NoSession />} />
             <Route path="/graph" element={sessionId ? <Graph sessionId={sessionId} /> : <NoSession />} />
             <Route path="/replay" element={sessionId ? <Replay sessionId={sessionId} /> : <NoSession />} />
-            <Route path="/mitre" element={<MitreMatrix sessionId={sessionId} />} />
+            <Route path="/mitre" element={<MitreMatrix sessionId={sessionId} onOpenCopilot={handleOpenCopilot} />} />
             <Route path="/analysis" element={sessionId ? <Analysis sessionId={sessionId} /> : <NoSession />} />
             <Route path="/report" element={sessionId ? <ReportExport sessionId={sessionId} sessionInfo={sessionInfo} /> : <NoSession />} />
             <Route path="/settings" element={<Settings />} />
@@ -487,6 +493,8 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
         sessionInfo={sessionInfo}
         isOpen={copilotOpen}
         onClose={() => setCopilotOpen(false)}
+        initialPrompt={copilotInitialPrompt}
+        onClearInitialPrompt={() => setCopilotInitialPrompt('')}
       />
 
       {/* Live Threat Telemetry Ticker at the bottom edge */}
