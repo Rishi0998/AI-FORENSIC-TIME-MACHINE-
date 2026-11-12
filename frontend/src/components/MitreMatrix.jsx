@@ -106,7 +106,7 @@ export default function MitreMatrix({ sessionId, onOpenCopilot }) {
   const getSeverityGlow = (sev, isDetected) => {
     if (!isDetected) return 'rgba(255, 255, 255, 0.04)';
     if (sev === 'critical') return 'rgba(255, 0, 85, 0.25)';
-    if (sev === 'high') return 'rgba(255, 94, 0, 0.25)';
+    if (sev === 'high') return 'rgba(255, 94, 0, 0.25)'; -p
     if (sev === 'medium') return 'rgba(255, 187, 0, 0.2)';
     return 'rgba(0, 242, 254, 0.18)';
   };
@@ -497,8 +497,8 @@ export default function MitreMatrix({ sessionId, onOpenCopilot }) {
                           boxShadow: isSelected
                             ? '0 0 16px rgba(0, 242, 255, 0.5)'
                             : t.is_detected && t.severity === 'critical'
-                            ? '0 0 12px rgba(255, 0, 85, 0.35)'
-                            : 'none',
+                              ? '0 0 12px rgba(255, 0, 85, 0.35)'
+                              : 'none',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
