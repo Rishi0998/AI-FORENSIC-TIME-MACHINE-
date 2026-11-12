@@ -8,6 +8,7 @@ Eliminates orphan nodes by systematically anchoring system processes to the host
 import networkx as nx
 from typing import List, Dict, Optional
 from collections import defaultdict
+from services.mitre import _match_event_to_mitre
 
 
 NODE_COLORS = {
@@ -198,9 +199,13 @@ def build_attack_graph(events: List[Dict]) -> Dict:
         severity = (event.get("severity") or "low").lower()
         is_suspicious = bool(event.get("is_suspicious", 0))
         mitre = event.get("mitre_technique")
+        matched_pairs = _match_event_to_mitre(event)
+        event_mitre_techs = [t_id for _, t_id in matched_pairs]
+        if mitre and mitre not in event_mitre_techs:
+            event_mitre_techs.append(mitre)
 
         weight = SEVERITY_WEIGHTS.get(severity, 2)
-        if is_suspicious:
+        if is_suspicious or event_mitre_techs:
             weight = max(weight, 18)
 
         # ── Network IP Node ──
@@ -220,8 +225,8 @@ def build_attack_graph(events: List[Dict]) -> Dict:
             entity_events[ip_id] += 1
             entity_threats[ip_id] += weight if is_suspicious else 1
             entity_severities[ip_id].append(severity)
-            if mitre:
-                entity_mitre[ip_id].add(mitre)
+            if event_mitre_techs:
+                entity_mitre[ip_id].update(event_mitre_techs)
 
         # ── User / Identity Node ──
         if user:
@@ -253,10 +258,10 @@ def build_attack_graph(events: List[Dict]) -> Dict:
                         role="Authenticated Interactive User"
                     )
             entity_events[user_id] += 1
-            entity_threats[user_id] += weight if is_suspicious else 1
+            entity_threats[user_id] += weight if (is_suspicious or event_mitre_techs) else 1
             entity_severities[user_id].append(severity)
-            if mitre:
-                entity_mitre[user_id].add(mitre)
+            if event_mitre_techs:
+                entity_mitre[user_id].update(event_mitre_techs)
 
         # ── Process / Binary Node ──
         if process and len(processes) < 65:
@@ -284,45 +289,47 @@ def build_attack_graph(events: List[Dict]) -> Dict:
                     role=prole
                 )
             entity_events[proc_id] += 1
-            entity_threats[proc_id] += weight if is_suspicious else 1
+            entity_threats[proc_id] += weight if (is_suspicious or event_mitre_techs) else 1
             entity_severities[proc_id].append(severity)
-            if mitre:
-                entity_mitre[proc_id].add(mitre)
+            if event_mitre_techs:
+                entity_mitre[proc_id].update(event_mitre_techs)
 
         # ── 3. Edge Correlations (Topological Relationships) ────────────────
         user_node_id = (f"sys_{user}" if (user and user.lower() in SYSTEM_USERS) else f"user_{user}") if user else None
         proc_node_id = f"proc_{process}" if process else None
         ip_node_id = f"ip_{ip}" if (ip and ip not in ("127.0.0.1", "::1", "localhost")) else None
 
+        edge_suspicious = is_suspicious or bool(event_mitre_techs)
+
         # User -> Process Execution
         if user_node_id and proc_node_id:
             edge_key = (user_node_id, proc_node_id)
-            _add_edge_record(edge_aggregates, edge_key, action, severity, is_suspicious, mitre, i)
+            _add_edge_record(edge_aggregates, edge_key, action, severity, edge_suspicious, event_mitre_techs, i)
 
         # IP -> User Access
         if ip_node_id and user_node_id:
             edge_key = (ip_node_id, user_node_id)
-            _add_edge_record(edge_aggregates, edge_key, "Network Auth", severity, is_suspicious, mitre, i)
+            _add_edge_record(edge_aggregates, edge_key, "Network Auth", severity, edge_suspicious, event_mitre_techs, i)
 
         # IP -> Process (Direct socket connection / listener)
         if ip_node_id and proc_node_id and not user_node_id:
             edge_key = (ip_node_id, proc_node_id)
-            _add_edge_record(edge_aggregates, edge_key, "Network Packet", severity, is_suspicious, mitre, i)
+            _add_edge_record(edge_aggregates, edge_key, "Network Packet", severity, edge_suspicious, event_mitre_techs, i)
 
         # Unparented Process -> Connect to Host Root (Eliminates Orphans!)
         if proc_node_id and not user_node_id and not ip_node_id:
             edge_key = (host_id, proc_node_id)
-            _add_edge_record(edge_aggregates, edge_key, "Kernel Dispatch", severity, is_suspicious, mitre, i)
+            _add_edge_record(edge_aggregates, edge_key, "Kernel Dispatch", severity, edge_suspicious, event_mitre_techs, i)
 
         # Unparented User -> Connect to Host Root
         if user_node_id and not proc_node_id and not ip_node_id:
             edge_key = (user_node_id, host_id)
-            _add_edge_record(edge_aggregates, edge_key, "Logon Session", severity, is_suspicious, mitre, i)
+            _add_edge_record(edge_aggregates, edge_key, "Logon Session", severity, edge_suspicious, event_mitre_techs, i)
 
         # Unparented IP -> Connect to Host Root
         if ip_node_id and not user_node_id and not proc_node_id:
             edge_key = (ip_node_id, host_id)
-            _add_edge_record(edge_aggregates, edge_key, "Gateway Inbound", severity, is_suspicious, mitre, i)
+            _add_edge_record(edge_aggregates, edge_key, "Gateway Inbound", severity, edge_suspicious, event_mitre_techs, i)
 
     # ── 4. Guarantee Global Topology Connectivity ──────────────────────────
     # Link all System Principals to Host Root
@@ -460,7 +467,10 @@ def _add_edge_record(aggregates, edge_key, action, severity, is_suspicious, mitr
     if is_suspicious:
         data["suspicious"] = True
     if mitre:
-        data["mitre"].add(mitre)
+        if isinstance(mitre, (list, tuple, set)):
+            data["mitre"].update(mitre)
+        else:
+            data["mitre"].add(str(mitre))
     data["first_idx"] = min(data["first_idx"], idx)
     data["last_idx"] = max(data["last_idx"], idx)
 

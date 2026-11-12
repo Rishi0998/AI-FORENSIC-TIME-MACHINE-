@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import { getGraph } from '../api';
@@ -113,21 +113,36 @@ function runRadarLayout(cy) {
     };
   });
 
-  // Apply positions with smooth animation
+  // Apply positions immediately and fit
+  cy.nodes().forEach((node) => {
+    const targetPos = positions[node.id()] || { x: 0, y: 0 };
+    node.position(targetPos);
+  });
+  cy.fit(undefined, 50);
+
+  // Apply smooth animation for organic landing
   cy.nodes().forEach((node) => {
     const targetPos = positions[node.id()] || { x: 0, y: 0 };
     node.animate(
       { position: targetPos },
-      { duration: 750, easing: 'ease-out-cubic' }
+      { duration: 500, easing: 'ease-out-cubic' }
     );
   });
 
   setTimeout(() => {
-    cy.fit(undefined, 50);
-  }, 780);
+    if (cy && !cy.destroyed()) {
+      cy.resize();
+      cy.fit(undefined, 50);
+    }
+  }, 520);
 }
 
 export default function Graph({ sessionId }) {
+  const location = useLocation();
+  const highlightTechnique = location.state?.highlightTechnique;
+  const highlightTechniqueName = location.state?.techniqueName;
+  const [activeSessionId, setActiveSessionId] = useState(sessionId);
+
   const [graphData, setGraphData] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -153,13 +168,29 @@ export default function Graph({ sessionId }) {
   const shockwavesRef = useRef([]);
   const radarAngleRef = useRef(0);
 
+  useEffect(() => {
+    if (sessionId) {
+      setActiveSessionId(sessionId);
+    } else {
+      fetch('/api/latest-session')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.session_id) {
+            setActiveSessionId(data.session_id);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [sessionId]);
+
   const fetchGraphData = useCallback((recalc = false) => {
-    if (!sessionId) {
+    const targetSession = activeSessionId || sessionId;
+    if (!targetSession) {
       setLoading(false);
       return;
     }
     setLoading(true);
-    getGraph(sessionId, recalc)
+    getGraph(targetSession, recalc)
       .then((data) => {
         setGraphData(data.graph?.elements);
         setMetrics(data.graph?.metrics);
@@ -168,7 +199,7 @@ export default function Graph({ sessionId }) {
       .catch(() => {
         setLoading(false);
       });
-  }, [sessionId]);
+  }, [activeSessionId, sessionId]);
 
   useEffect(() => {
     fetchGraphData(false);
@@ -494,11 +525,70 @@ export default function Graph({ sessionId }) {
     });
 
     cyRef.current = cy;
+
+    setTimeout(() => {
+      if (cy && !cy.destroyed()) {
+        cy.resize();
+        cy.fit(undefined, 50);
+      }
+    }, 60);
   }, [graphData, layoutMode]);
 
   useEffect(() => {
     initCytoscape();
   }, [initCytoscape]);
+
+  // Dynamic Container Resize Observer
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      if (cyRef.current && !cyRef.current.destroyed()) {
+        cyRef.current.resize();
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Locate and Highlight specific MITRE Technique from Matrix navigation
+  useEffect(() => {
+    if (!cyRef.current || !graphData || !highlightTechnique) return;
+    const cy = cyRef.current;
+    const matchedNode = cy.nodes().filter((n) => {
+      const techs = n.data('mitre_techniques') || [];
+      return techs.includes(highlightTechnique);
+    }).first();
+
+    if (matchedNode && matchedNode.length > 0) {
+      cy.elements().removeClass('dimmed highlighted-chain');
+      matchedNode.addClass('highlighted-chain');
+      matchedNode.select();
+      setSelectedNode({
+        id: matchedNode.id(),
+        label: matchedNode.data('label'),
+        type: matchedNode.data('type'),
+        icon: matchedNode.data('icon') || '⚡',
+        role: matchedNode.data('role') || 'Active Topological Entity',
+        threatLevel: matchedNode.data('threat_level') || 'benign',
+        threatScore: matchedNode.data('threat_score') || 0,
+        blastRadius: matchedNode.data('blast_radius') || 0,
+        eventCount: matchedNode.data('event_count') || 1,
+        mitre: matchedNode.data('mitre_techniques') || [],
+        connections: matchedNode.connectedEdges().length,
+        inDegree: matchedNode.incomers('edge').length,
+        outDegree: matchedNode.outgoers('edge').length,
+      });
+
+      playTargetLock();
+      cy.animate(
+        {
+          center: { eles: matchedNode },
+          zoom: 1.5,
+        },
+        { duration: 700 }
+      );
+    }
+  }, [graphData, highlightTechnique]);
 
   const applyLayout = (name) => {
     playWarpEffect();

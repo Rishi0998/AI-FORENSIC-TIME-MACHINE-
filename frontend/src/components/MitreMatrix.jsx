@@ -106,7 +106,7 @@ export default function MitreMatrix({ sessionId, onOpenCopilot }) {
   const getSeverityGlow = (sev, isDetected) => {
     if (!isDetected) return 'rgba(255, 255, 255, 0.04)';
     if (sev === 'critical') return 'rgba(255, 0, 85, 0.25)';
-    if (sev === 'high') return 'rgba(255, 94, 0, 0.25)'; -p
+    if (sev === 'high') return 'rgba(255, 94, 0, 0.25)';
     if (sev === 'medium') return 'rgba(255, 187, 0, 0.2)';
     return 'rgba(0, 242, 254, 0.18)';
   };
@@ -669,7 +669,12 @@ export default function MitreMatrix({ sessionId, onOpenCopilot }) {
                 className="btn btn-sm btn-outline"
                 onClick={() => {
                   playCyberClick();
-                  navigate('/app/graph');
+                  navigate('/app/graph', {
+                    state: {
+                      highlightTechnique: selectedTechnique.id,
+                      techniqueName: selectedTechnique.name,
+                    },
+                  });
                 }}
                 title="Highlight correlated nodes on topological attack graph"
               >
@@ -720,7 +725,9 @@ export default function MitreMatrix({ sessionId, onOpenCopilot }) {
                       fontFamily: 'var(--font-mono)',
                     }}
                   >
-                    <span style={{ color: 'var(--accent-cyan)', minWidth: 64 }}>{ev.timestamp.split('T')[1]?.substring(0, 8) || ev.timestamp}</span>
+                    <span style={{ color: 'var(--accent-cyan)', minWidth: 64 }}>
+                      {String(ev?.timestamp || '').includes('T') ? String(ev.timestamp).split('T')[1].substring(0, 8) : String(ev?.timestamp || '')}
+                    </span>
                     <span style={{ color: '#fff', fontWeight: 600 }}>{ev.action}</span>
                     {ev.user && <span style={{ color: 'var(--text-secondary)' }}>USER:{ev.user}</span>}
                     {ev.process && <span style={{ color: '#00ff88' }}>PROC:{ev.process}</span>}

@@ -465,7 +465,7 @@ function DashboardLayout({ sessionId, sessionInfo, onAnalysisComplete, onNewSess
             <Route path="/" element={<Upload onAnalysisComplete={onAnalysisComplete} loading={loading} setLoading={setLoading} />} />
             <Route path="/monitor" element={<LiveMonitor onAnalysisComplete={onAnalysisComplete} />} />
             <Route path="/timeline" element={sessionId ? <Timeline sessionId={sessionId} /> : <NoSession />} />
-            <Route path="/graph" element={sessionId ? <Graph sessionId={sessionId} /> : <NoSession />} />
+            <Route path="/graph" element={<Graph sessionId={sessionId} />} />
             <Route path="/replay" element={sessionId ? <Replay sessionId={sessionId} /> : <NoSession />} />
             <Route path="/mitre" element={<MitreMatrix sessionId={sessionId} onOpenCopilot={handleOpenCopilot} />} />
             <Route path="/analysis" element={sessionId ? <Analysis sessionId={sessionId} /> : <NoSession />} />
